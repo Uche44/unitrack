@@ -1,0 +1,62 @@
+from django.contrib.auth.backends import ModelBackend
+from .models import User
+
+class EmailBackend(ModelBackend):
+    def authenticate(self, request, email=None, password=None, **kwargs):
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return None
+
+        if user.check_password(password):
+            return user
+        return None
+
+
+
+
+class Project(models.Model):
+    STATUS_CHOICES = (
+        ('proposal_pending', 'Proposal Pending'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+    )
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
+    supervisor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='supervised_projects')
+    title = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    session = models.CharField(max_length=20)
+    duration = models.CharField(max_length=50)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='proposal_pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class Submission(models.Model):
+    MILESTONE_CHOICES = (
+        ('proposal', 'Proposal'),
+        ('chapter_1', 'Chapter 1'),
+        ('chapter_2', 'Chapter 2'),
+        ('chapter_3', 'Chapter 3'),
+        ('chapter_4', 'Chapter 4'),
+        ('chapter_5', 'Chapter 5'),
+        ('final_report', 'Final Report'),
+    )
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='submissions')
+    milestone = models.CharField(max_length=50, choices=MILESTONE_CHOICES)
+    file_url = models.FileField(upload_to='submissions/')
+    version = models.PositiveIntegerField(default=1)
+    comment = models.TextField(null=True, blank=True)
+    is_read = models.BooleanField(default=False)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+
+class Feedback(models.Model):
+    submission = models.ForeignKey(Submission, on_delete=models.CASCADE, related_name='feedbacks')
+    supervisor = models.ForeignKey(User, on_delete=models.CASCADE)
+    feedback_text = models.TextField()
+    annotated_file_url = models.FileField(upload_to='feedback/', null=True, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
