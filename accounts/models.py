@@ -33,6 +33,13 @@ class User(AbstractUser):
     matric_no = models.CharField(max_length=20, unique=True, null=True, blank=True)
     staff_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
     is_approved = models.BooleanField(default=True)  # default for students
+    supervisor = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='students_under_supervision'
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 

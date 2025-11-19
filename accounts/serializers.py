@@ -52,3 +52,71 @@ class SupervisorSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "full_name", "email", "staff_id", "department", "is_approved", "created_at"]
+
+
+class StudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'full_name', 'email', 'matric_no']
+
+class AssignSupervisorSerializer(serializers.Serializer):
+    student_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        allow_empty=False,
+        max_length=5,  # <-- LIMIT TO 5 STUDENTS
+    )
+    supervisor_id = serializers.IntegerField()
+
+    def validate(self, data):
+        student_ids = data["student_ids"]
+        supervisor_id = data["supervisor_id"]
+
+        # Fetch supervisor
+        try:
+            supervisor = User.objects.get(id=supervisor_id)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Supervisor not found.")
+
+        # Validate supervisor
+        if supervisor.role != "supervisor":
+            raise serializers.ValidationError("Selected user is not a supervisor.")
+
+
+        # Prevent supervisor overload
+        if supervisor.students_under_supervision.count() + len(student_ids) > 10:
+            raise serializers.ValidationError(
+                f"{supervisor.full_name} cannot take more than 10 students total."
+            )
+
+        # Validate students
+        students = []
+        for sid in student_ids:
+            try:
+                student = User.objects.get(id=sid)
+            except User.DoesNotExist:
+                raise serializers.ValidationError(f"Student with ID {sid} does not exist.")
+
+            if student.role != "student":
+                raise serializers.ValidationError(f"User {sid} is not a student.")
+
+            if student.supervisor_id is not None:
+                raise serializers.ValidationError(
+                    f"Student {student.full_name} is already assigned to a supervisor."
+                )
+
+            students.append(student)
+
+        # Save  data
+        data["supervisor"] = supervisor
+        data["students"] = students
+        return data
+
+    def save(self):
+        supervisor = self.validated_data["supervisor"]
+        students = self.validated_data["students"]
+
+        for student in students:
+            student.supervisor = supervisor
+            student.save()
+
+        return students
