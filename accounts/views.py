@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework import status, viewsets
 from rest_framework.response import Response
-from .serializers import UserSerializer, LoginSerializer, SupervisorSerializer, AssignSupervisorSerializer, StudentSerializer
+from .serializers import UserSerializer, LoginSerializer, SupervisorSerializer, AssignSupervisorSerializer, StudentSerializer, StudentWithSupervisorSerializer
 from .models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .is_admin import IsAdminRole
@@ -35,9 +35,12 @@ class LoginView(TokenObtainPairView):
         response = Response(
             {"message": "Login successful",
                "user": {
+            "id": user.id, 
             "email": user.email,
             "role": user.role,
             "full_name": user.full_name,
+            "staff_id": user.staff_id, 
+            "matric_no": user.matric_no,
         }
              },
             status=status.HTTP_200_OK
@@ -106,7 +109,7 @@ class LogoutView(APIView):
 
 @api_view(["GET"])
 def approved_supervisors(request):
-    supervisors = User.objects.filter(role="supervisor", is_approved=True)
+    supervisors = User.objects.filter(role="supervisor", is_approved=True, is_fully_booked=False)
     serializer = SupervisorSerializer(supervisors, many=True)
     return Response(serializer.data)
 
@@ -120,8 +123,15 @@ def pending_supervisors(request):
 # all students
 @api_view(["GET"])
 def unassigned_students(request):
-    students = User.objects.filter(role="student")
+    students = User.objects.filter(role="student", is_assigned=False)
     serializer = StudentSerializer(students, many=True)
+    return Response(serializer.data)
+
+# assigned students
+@api_view(["GET"])
+def assigned_students(request):
+    students = User.objects.filter(role="student", is_assigned=True)
+    serializer = StudentWithSupervisorSerializer(students, many=True)
     return Response(serializer.data)
 
 # approval
@@ -210,16 +220,16 @@ class AssignSupervisorView(APIView):
 
 # view for supervisors and students under them.
 
-# class SupervisorStudentsView(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
+class SupervisorStudentsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
 
-#     def get(self, request, supervisor_id):
-#         supervisor = User.objects.filter(id=supervisor_id, role='supervisor').first()
+    def get(self, request, supervisor_id):
+        supervisor = User.objects.filter(id=supervisor_id, role='supervisor').first()
 
-#         if not supervisor:
-#             return Response({"error": "Supervisor not found"}, status=404)
+        if not supervisor:
+            return Response({"error": "Supervisor not found"}, status=404)
 
-#         students = supervisor.students_under_supervision.all()
-#         serializer = StudentSerializer(students, many=True)
+        students = supervisor.students_under_supervision.all()
+        serializer = StudentSerializer(students, many=True)
 
-#         return Response(serializer.data)
+        return Response(serializer.data)

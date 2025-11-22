@@ -8,7 +8,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['full_name', 'email', 'password', 'role', 'department', 'matric_no', 'staff_id']
+        fields = ['id','full_name', 'email', 'password', 'role', 'department', 'matric_no', 'staff_id', 'is_approved','is_assigned','is_fully_booked',]
 
     def create(self, validated_data):
         password = validated_data.pop('password')
@@ -39,9 +39,12 @@ class LoginSerializer(TokenObtainPairSerializer):
 
         #user info in response
         data.update({
+             "id": self.user.id,
             "email": self.user.email,
             "role": self.user.role,
             "full_name": self.user.full_name,
+            # "staff_id": self.user.staff_id,
+            # "matric_no": self.user.matric_no,
         })
         return data
     
@@ -51,13 +54,23 @@ class LoginSerializer(TokenObtainPairSerializer):
 class SupervisorSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "full_name", "email", "staff_id", "department", "is_approved", "created_at"]
+        fields = ["id", "full_name", "email", "staff_id", "department", "is_approved","is_fully_booked", "created_at"]
 
 
 class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'full_name', 'email', 'matric_no']
+        fields = ['id', 'full_name', 'email', 'matric_no', "is_assigned"]
+
+
+class StudentWithSupervisorSerializer(serializers.ModelSerializer):
+    supervisor = SupervisorSerializer()
+
+    class Meta:
+        model = User
+        fields = ["id", "full_name", "matric_no", "email", "role", "supervisor"]
+
+
 
 class AssignSupervisorSerializer(serializers.Serializer):
     student_ids = serializers.ListField(
@@ -83,9 +96,9 @@ class AssignSupervisorSerializer(serializers.Serializer):
 
 
         # Prevent supervisor overload
-        if supervisor.students_under_supervision.count() + len(student_ids) > 10:
+        if supervisor.students_under_supervision.count() + len(student_ids) > 5:
             raise serializers.ValidationError(
-                f"{supervisor.full_name} cannot take more than 10 students total."
+                f"{supervisor.full_name} cannot take more than 5 students total."
             )
 
         # Validate students
@@ -99,10 +112,15 @@ class AssignSupervisorSerializer(serializers.Serializer):
             if student.role != "student":
                 raise serializers.ValidationError(f"User {sid} is not a student.")
 
-            if student.supervisor_id is not None:
+            # if student.supervisor_id is not None:
+            if student.is_assigned != False:
+
                 raise serializers.ValidationError(
                     f"Student {student.full_name} is already assigned to a supervisor."
                 )
+            
+            if student.is_assigned != False:
+                raise serializers.ValidationError(f"Student{student.full_name} is already assigned to a supervisor")
 
             students.append(student)
 
@@ -117,6 +135,13 @@ class AssignSupervisorSerializer(serializers.Serializer):
 
         for student in students:
             student.supervisor = supervisor
+            student.is_assigned = True
             student.save()
 
+    # Update supervisor booking status AFTER assigning the students
+        total_students = supervisor.students_under_supervision.count()
+        supervisor.is_fully_booked = total_students >= 5
+        supervisor.save()
+
         return students
+

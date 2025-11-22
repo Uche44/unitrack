@@ -33,6 +33,8 @@ class User(AbstractUser):
     matric_no = models.CharField(max_length=20, unique=True, null=True, blank=True)
     staff_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
     is_approved = models.BooleanField(default=True)  # default for students
+    is_assigned = models.BooleanField(default=False, null=True, blank=True)
+    is_fully_booked = models.BooleanField(default=False, null=True, blank=True) #for supervisor
     supervisor = models.ForeignKey(
         'self',
         on_delete=models.SET_NULL,
