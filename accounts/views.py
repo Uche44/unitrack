@@ -2,11 +2,14 @@ from django.shortcuts import render
 from rest_framework import generics, permissions
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework.views import APIView
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework import status, viewsets
 from rest_framework.response import Response
 from .serializers import UserSerializer, LoginSerializer, SupervisorSerializer, AssignSupervisorSerializer, StudentSerializer, StudentWithSupervisorSerializer
+from datetime import timedelta
+import uuid
 from .models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .is_admin import IsAdminRole
@@ -41,6 +44,7 @@ class LoginView(TokenObtainPairView):
             "full_name": user.full_name,
             "staff_id": user.staff_id, 
             "matric_no": user.matric_no,
+            "is_approved": user.is_approved,
         }
              },
             status=status.HTTP_200_OK
@@ -108,21 +112,21 @@ class LogoutView(APIView):
 
 
 @api_view(["GET"])
-def approved_supervisors(request):
+def approved_supervisors(_request):
     supervisors = User.objects.filter(role="supervisor", is_approved=True, is_fully_booked=False)
     serializer = SupervisorSerializer(supervisors, many=True)
     return Response(serializer.data)
 
 
 @api_view(["GET"])
-def pending_supervisors(request):
+def pending_supervisors(_request):
     supervisors = User.objects.filter(role="supervisor", is_approved=False)
     serializer = SupervisorSerializer(supervisors, many=True)
     return Response(serializer.data)
 
 # all students
 @api_view(["GET"])
-def unassigned_students(request):
+def unassigned_students(_request):
     students = User.objects.filter(role="student", is_assigned=False)
     serializer = StudentSerializer(students, many=True)
     return Response(serializer.data)
@@ -172,33 +176,6 @@ class ApproveSupervisorView(APIView):
         )
     
 
-
-
-# class SupervisorViewSet(viewsets.ModelViewSet):
-#     queryset = Supervisor.objects.all()
-#     serializer_class = SupervisorSerializer
-#     permission_classes = [IsAdminRole]  # or per-action permissions
-
-#     @action(detail=True, methods=["post"], url_path="assign-students")
-#     def assign_students(self, request, pk=None):
-#         # pk = supervisor id from URL
-#         data = request.data.copy()
-#         data["supervisor_id"] = pk  # enforce supervisor from URL
-
-#         serializer = AssignSupervisorSerializer(data=data)
-#         if serializer.is_valid():
-#             students = serializer.save()
-#             supervisor = serializer.validated_data["supervisor"]
-
-#             return Response({
-#                 "message": "Supervisor assigned successfully.",
-#                 "supervisor": supervisor.full_name,
-#                 "students_assigned": [s.full_name for s in students],
-#             }, status=status.HTTP_200_OK)
-
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class AssignSupervisorView(APIView):
     permission_classes = [IsAdminRole]
 
@@ -223,13 +200,112 @@ class AssignSupervisorView(APIView):
 class SupervisorStudentsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, supervisor_id):
+    def get(self, request, supervisor_id, student_id=None):
         supervisor = User.objects.filter(id=supervisor_id, role='supervisor').first()
 
         if not supervisor:
             return Response({"error": "Supervisor not found"}, status=404)
 
         students = supervisor.students_under_supervision.all()
+
+        if student_id:
+            student = students.filter(id=student_id).first()
+            if not student:
+                return Response({"error": "Student not found under this supervisor"}, status=404)
+            serializer = StudentWithSupervisorSerializer(student)
+            return Response(serializer.data)
+
+
         serializer = StudentSerializer(students, many=True)
 
         return Response(serializer.data)
+    
+    # get student details (with supervisor)
+
+
+class StudentDetailView(RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = StudentWithSupervisorSerializer
+    lookup_field = "id"          
+    lookup_url_kwarg = "student_id"
+
+
+class GuestLoginView(APIView):
+    """
+    Guest login endpoint.
+    Creates a temporary guest user for demo purposes with specified role.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        role = request.data.get("role", "student")
+
+        if role not in ["student", "supervisor", "admin"]:
+            return Response(
+                {"error": "Invalid role. Must be: student, supervisor, or admin"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Check if guest user for this role already exists
+            guest_user = User.objects.filter(
+                email=f"guest_{role}@demo.local",
+                is_guest=True,
+                role=role
+            ).first()
+
+            if not guest_user:
+                # Create new guest user
+                guest_email = f"guest_{role}@demo.local"
+                guest_user = User.objects.create_user(
+                    email=guest_email,
+                    password=str(uuid.uuid4()),
+                    full_name=f"Guest {role.capitalize()}",
+                    role=role,
+                    is_guest=True,
+                    is_approved=True
+                )
+
+            # Generate tokens
+            refresh = RefreshToken.for_user(guest_user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
+            response = Response(
+                {
+                    "message": "Guest login successful",
+                    "user": {
+                        "id": guest_user.id,
+                        "email": guest_user.email,
+                        "role": guest_user.role,
+                        "full_name": guest_user.full_name,
+                        "is_guest": True,
+                        "is_approved": guest_user.is_approved,
+                    },
+                },
+                status=status.HTTP_200_OK
+            )
+
+            # Set HttpOnly cookies
+            response.set_cookie(
+                key="access_token",
+                value=access_token,
+                httponly=True,
+                secure=False,
+                samesite='Lax',
+            )
+            response.set_cookie(
+                key="refresh_token",
+                value=refresh_token,
+                httponly=True,
+                secure=False,
+                samesite='Lax',
+            )
+
+            return response
+
+        except Exception as e:
+            return Response(
+                {"error": f"Guest login failed: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

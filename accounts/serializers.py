@@ -43,6 +43,7 @@ class LoginSerializer(TokenObtainPairSerializer):
             "email": self.user.email,
             "role": self.user.role,
             "full_name": self.user.full_name,
+            "is_approved": self.user.is_approved,
             # "staff_id": self.user.staff_id,
             # "matric_no": self.user.matric_no,
         })
@@ -68,7 +69,7 @@ class StudentWithSupervisorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "full_name", "matric_no", "email", "role", "supervisor"]
+        fields = ["id", "full_name", "matric_no", "department", "email", "role", "supervisor"]
 
 
 

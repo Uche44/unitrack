@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'rest_framework',
     'accounts',
+    'projects',
      'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
     'django.contrib.auth',
