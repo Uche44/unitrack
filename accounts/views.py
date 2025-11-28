@@ -127,7 +127,7 @@ def pending_supervisors(_request):
 # all students
 @api_view(["GET"])
 def unassigned_students(_request):
-    students = User.objects.filter(role="student", is_assigned=False)
+    students = User.objects.filter(role="student", is_assigned=False, is_guest=False)
     serializer = StudentSerializer(students, many=True)
     return Response(serializer.data)
 
