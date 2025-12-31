@@ -127,7 +127,8 @@ def pending_supervisors(_request):
 # all students
 @api_view(["GET"])
 def unassigned_students(_request):
-    students = User.objects.filter(role="student", is_assigned=False, is_guest=False)
+    # students = User.objects.filter(role="student", is_assigned=False, is_guest=False)
+    students = User.objects.filter(role="student", is_assigned=False)
     serializer = StudentSerializer(students, many=True)
     return Response(serializer.data)
 
@@ -230,82 +231,82 @@ class StudentDetailView(RetrieveAPIView):
     lookup_url_kwarg = "student_id"
 
 
-class GuestLoginView(APIView):
-    """
-    Guest login endpoint.
-    Creates a temporary guest user for demo purposes with specified role.
-    """
-    permission_classes = [AllowAny]
+# class GuestLoginView(APIView):
+#     """
+#     Guest login endpoint.
+#     Creates a temporary guest user for demo purposes with specified role.
+#     """
+#     permission_classes = [AllowAny]
 
-    def post(self, request):
-        role = request.data.get("role", "student")
+#     def post(self, request):
+#         role = request.data.get("role", "student")
 
-        if role not in ["student", "supervisor", "admin"]:
-            return Response(
-                {"error": "Invalid role. Must be: student, supervisor, or admin"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+#         if role not in ["student", "supervisor", "admin"]:
+#             return Response(
+#                 {"error": "Invalid role. Must be: student, supervisor, or admin"},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
 
-        try:
-            # Check if guest user for this role already exists
-            guest_user = User.objects.filter(
-                email=f"guest_{role}@demo.local",
-                is_guest=True,
-                role=role
-            ).first()
+#         try:
+#             # Check if guest user for this role already exists
+#             guest_user = User.objects.filter(
+#                 email=f"guest_{role}@demo.local",
+#                 is_guest=True,
+#                 role=role
+#             ).first()
 
-            if not guest_user:
-                # Create new guest user
-                guest_email = f"guest_{role}@demo.local"
-                guest_user = User.objects.create_user(
-                    email=guest_email,
-                    password=str(uuid.uuid4()),
-                    full_name=f"Guest {role.capitalize()}",
-                    role=role,
-                    is_guest=True,
-                    is_approved=True
-                )
+#             if not guest_user:
+#                 # Create new guest user
+#                 guest_email = f"guest_{role}@demo.local"
+#                 guest_user = User.objects.create_user(
+#                     email=guest_email,
+#                     password=str(uuid.uuid4()),
+#                     full_name=f"Guest {role.capitalize()}",
+#                     role=role,
+#                     is_guest=True,
+#                     is_approved=True
+#                 )
 
-            # Generate tokens
-            refresh = RefreshToken.for_user(guest_user)
-            access_token = str(refresh.access_token)
-            refresh_token = str(refresh)
+#             # Generate tokens
+#             refresh = RefreshToken.for_user(guest_user)
+#             access_token = str(refresh.access_token)
+#             refresh_token = str(refresh)
 
-            response = Response(
-                {
-                    "message": "Guest login successful",
-                    "user": {
-                        "id": guest_user.id,
-                        "email": guest_user.email,
-                        "role": guest_user.role,
-                        "full_name": guest_user.full_name,
-                        "is_guest": True,
-                        "is_approved": guest_user.is_approved,
-                    },
-                },
-                status=status.HTTP_200_OK
-            )
+#             response = Response(
+#                 {
+#                     "message": "Guest login successful",
+#                     "user": {
+#                         "id": guest_user.id,
+#                         "email": guest_user.email,
+#                         "role": guest_user.role,
+#                         "full_name": guest_user.full_name,
+#                         "is_guest": True,
+#                         "is_approved": guest_user.is_approved,
+#                     },
+#                 },
+#                 status=status.HTTP_200_OK
+#             )
 
-            # Set HttpOnly cookies
-            response.set_cookie(
-                key="access_token",
-                value=access_token,
-                httponly=True,
-                secure=False,
-                samesite='Lax',
-            )
-            response.set_cookie(
-                key="refresh_token",
-                value=refresh_token,
-                httponly=True,
-                secure=False,
-                samesite='Lax',
-            )
+#             # Set HttpOnly cookies
+#             response.set_cookie(
+#                 key="access_token",
+#                 value=access_token,
+#                 httponly=True,
+#                 secure=False,
+#                 samesite='Lax',
+#             )
+#             response.set_cookie(
+#                 key="refresh_token",
+#                 value=refresh_token,
+#                 httponly=True,
+#                 secure=False,
+#                 samesite='Lax',
+#             )
 
-            return response
+#             return response
 
-        except Exception as e:
-            return Response(
-                {"error": f"Guest login failed: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+#         except Exception as e:
+#             return Response(
+#                 {"error": f"Guest login failed: {str(e)}"},
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )

@@ -35,7 +35,7 @@ class User(AbstractUser):
     is_approved = models.BooleanField(default=True)  # default for students
     is_assigned = models.BooleanField(default=False, null=True, blank=True)
     is_fully_booked = models.BooleanField(default=False, null=True, blank=True) #for supervisor
-    is_guest = models.BooleanField(default=False)
+    # is_guest = models.BooleanField(default=False)
     supervisor = models.ForeignKey(
         'self',
         on_delete=models.SET_NULL,

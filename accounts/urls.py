@@ -1,12 +1,12 @@
 from django.urls import path
-from .views import UserSignupView, LoginView, RefreshTokenView, LogoutView, approved_supervisors, pending_supervisors, ApproveSupervisorView, AssignSupervisorView, unassigned_students, assigned_students, SupervisorStudentsView, StudentDetailView, GuestLoginView
+from .views import UserSignupView, LoginView, RefreshTokenView, LogoutView, approved_supervisors, pending_supervisors, ApproveSupervisorView, AssignSupervisorView, unassigned_students, assigned_students, SupervisorStudentsView, StudentDetailView
 from . import views
 
 
 urlpatterns = [
     path('signup/', UserSignupView.as_view(), name='user-signup'),
     path('login/', LoginView.as_view(), name='user-login'),
-    path('guest-login/', GuestLoginView.as_view(), name='guest-login'),
+    # path('guest-login/', GuestLoginView.as_view(), name='guest-login'),
     path('refresh/', RefreshTokenView.as_view(), name='token-refresh'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path("supervisors/", approved_supervisors, name="approved-supervisors"),
