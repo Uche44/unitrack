@@ -36,7 +36,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'accounts',
     'projects',
-     'corsheaders',
+    'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'cloudinary',
     'cloudinary_storage',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -76,24 +77,16 @@ REST_FRAMEWORK = {
     )
 }
 
-# SIMPLE_JWT = {
-#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-#     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-#     'ROTATE_REFRESH_TOKENS': True,
-#     'BLACKLIST_AFTER_ROTATION': True,
-#     'AUTH_HEADER_TYPES': ('Bearer',),
-# }
-
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     
     # These are the important settings for cookie-based auth
-    'AUTH_COOKIE': 'access_token',  # Cookie name for access token
-    'AUTH_COOKIE_REFRESH': 'refresh_token',  # Cookie name for refresh token
-    'AUTH_COOKIE_SECURE': False,  # Set to True in production with HTTPS
+    'AUTH_COOKIE': 'access_token',  
+    'AUTH_COOKIE_REFRESH': 'refresh_token',  
+    'AUTH_COOKIE_SECURE': False,  
     'AUTH_COOKIE_HTTP_ONLY': True,
-    'AUTH_COOKIE_SAMESITE': 'Lax',  # or 'None' if cross-site
+    'AUTH_COOKIE_SAMESITE': 'Lax',  
     'AUTH_COOKIE_PATH': '/',
     
     # Tell SimpleJWT to check cookies for the token
@@ -168,21 +161,33 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+# ✅ FIXED CORS SETTINGS
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173", 
     "http://127.0.0.1:5173",
-    "http://127.0.0.1:8000",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_COOKIE_HTTPONLY = False
-SESSION_COOKIE_SAMESITE = "Lax"
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
-SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = False     
 SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = "None"
-# CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+CSRF_COOKIE_SECURE = False        
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 JWT_AUTH_COOKIE = "access_token"
 JWT_AUTH_REFRESH_COOKIE = "refresh_token"

@@ -28,6 +28,35 @@ class ProjectSessionView(APIView):
 
 # create project
 
+# class CreateProjectView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+#         user = request.user
+
+#         if user.role != 'student':
+#             return Response(
+#                 {"error": "Only students can create projects"},
+#                 status=status.HTTP_403_FORBIDDEN
+#             )
+
+        # data = request.data.copy()
+        # data['student'] = user.id   
+
+        # serializer = ProjectCreateSerializer(data=data)
+
+        # if serializer.is_valid():
+        #     project = serializer.save()
+        #     return Response(
+        #         {
+        #             "message": "Project created successfully",
+        #             "project": serializer.data
+        #         },
+        #         status=status.HTTP_201_CREATED
+        #     )
+
+        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class CreateProjectView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -40,8 +69,16 @@ class CreateProjectView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
+        # Check if student has a supervisor assigned
+        if not hasattr(user, 'supervisor') or user.supervisor is None:
+            return Response(
+                {"error": "You must have a supervisor assigned before creating a project"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         data = request.data.copy()
-        data['student'] = user.id   
+        data['student'] = user.id
+        data['supervisor'] = user.supervisor.id  # ✅ ADD THIS LINE - Assign the student's supervisor
 
         serializer = ProjectCreateSerializer(data=data)
 
@@ -116,15 +153,27 @@ class CreateSubmissionView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
+
 class SupervisorStudentProjectView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, student_id):
+        # Debug logging
+        print(f"🔍 DEBUG: Logged in user: {request.user.id} - {request.user.email}")
+        print(f"🔍 DEBUG: User role: {request.user.role}")
+        print(f"🔍 DEBUG: Looking for student_id: {student_id}")
+        
         if request.user.role != 'supervisor':
             return Response(
                 {"error": "Only supervisors can access this endpoint"},
                 status=status.HTTP_403_FORBIDDEN
             )
+
+        # Check if ANY project exists for this student
+        all_projects = Project.objects.filter(student_id=student_id)
+        print(f"🔍 DEBUG: Projects found for student {student_id}: {all_projects.count()}")
+        for p in all_projects:
+            print(f"   - Project {p.id}: supervisor_id={p.supervisor_id}, student_id={p.student_id}")
 
         project = (
             Project.objects
@@ -133,6 +182,8 @@ class SupervisorStudentProjectView(APIView):
             .prefetch_related("submissions")
             .first()
         )
+
+        print(f"🔍 DEBUG: Project found for current supervisor: {project}")
 
         if not project:
             return Response(
@@ -143,3 +194,102 @@ class SupervisorStudentProjectView(APIView):
         from .serializers import ProjectDetailSerializer
         serializer = ProjectDetailSerializer(project)
         return Response(serializer.data)
+
+
+class ApproveRejectProposalView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, project_id):
+        """
+        Approve or reject a project proposal.
+        Only supervisors assigned to the project can perform this action.
+        """
+        user = request.user
+
+        # Verify user is a supervisor
+        if user.role != 'supervisor':
+            return Response(
+                {"error": "Only supervisors can approve or reject proposals"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Get the project
+        try:
+            project = Project.objects.select_related('student', 'supervisor').get(id=project_id)
+        except Project.DoesNotExist:
+            return Response(
+                {"error": "Project not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Verify the supervisor is assigned to this project
+        if project.supervisor != user:
+            return Response(
+                {"error": "You are not assigned to this project"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Validate request data
+        from .serializers import ProposalActionSerializer
+        serializer = ProposalActionSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        action = serializer.validated_data['action']
+        comment = serializer.validated_data.get('comment', '')
+
+        # Get the latest proposal submission
+        latest_proposal = (
+            Submission.objects
+            .filter(project=project, milestone='proposal')
+            .order_by('-version')
+            .first()
+        )
+
+        if not latest_proposal:
+            return Response(
+                {"error": "No proposal submission found for this project"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Perform the action
+        if action == 'approve':
+            latest_proposal.is_approved = True
+            latest_proposal.is_rejected = False
+            latest_proposal.rejection_comment = None
+            latest_proposal.save()
+
+            # Update project status
+            project.status = 'proposal_approved'
+            project.is_approved = True
+            project.save()
+
+            return Response({
+                "message": "Proposal approved successfully",
+                "project": {
+                    "id": project.id,
+                    "status": project.status,
+                    "is_approved": project.is_approved
+                }
+            }, status=status.HTTP_200_OK)
+
+        elif action == 'reject':
+            latest_proposal.is_approved = False
+            latest_proposal.is_rejected = True
+            latest_proposal.rejection_comment = comment
+            latest_proposal.save()
+
+            # Keep project status as proposal_pending
+            project.status = 'proposal_pending'
+            project.is_approved = False
+            project.save()
+
+            return Response({
+                "message": "Proposal rejected",
+                "project": {
+                    "id": project.id,
+                    "status": project.status,
+                    "is_approved": project.is_approved
+                },
+                "rejection_comment": comment
+            }, status=status.HTTP_200_OK)

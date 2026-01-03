@@ -76,6 +76,9 @@ class SubmissionSerializer(serializers.ModelSerializer):
             'version',
             'comment',
             'is_read',
+            'is_approved',
+            'is_rejected',
+            'rejection_comment',
             'submitted_at'
         ]
 
@@ -85,4 +88,9 @@ class ProjectDetailSerializer(ProjectSerializer):
 
     class Meta(ProjectSerializer.Meta):
         fields = ProjectSerializer.Meta.fields + ['submissions']
+
+
+class ProposalActionSerializer(serializers.Serializer):
+    action = serializers.ChoiceField(choices=['approve', 'reject'])
+    comment = serializers.CharField(required=False, allow_blank=True)
 

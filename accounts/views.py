@@ -57,6 +57,8 @@ class LoginView(TokenObtainPairView):
             httponly=True,
             secure=False,   
             samesite='Lax',
+            max_age=3600,      
+            path='/',
         )
         response.set_cookie(
             key="refresh_token",
@@ -64,6 +66,8 @@ class LoginView(TokenObtainPairView):
             httponly=True,
             secure=False,   
             samesite='Lax',
+            max_age=86400,     
+            path='/',
         )
 
         response.data.pop('access', None)

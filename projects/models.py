@@ -15,19 +15,11 @@ class ProjectSession(models.Model):
 class Project(models.Model):
     STATUS_CHOICES = (
         ('proposal_pending', 'Proposal Pending'),
+        ('proposal_approved', 'Proposal Approved'),
         ('in_progress', 'In Progress'),
         ('completed', 'Completed'),
     )
 
-    # MILESTONE_CHOICES = (
-    #     ('proposal', 'Proposal'),
-    #     ('chapter_one', 'Chapter One'),
-    #     ('chapter_two', 'Chapter Two'),
-    #     ('conclusion', 'conclusion'),
-    #     # ('chapter_three', 'Chapter Three'),
-    #     # ('chapter_four', 'Chapter Four'),
-    #     # ('chapter_five', 'Chapter Five'),
-    # )
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
     supervisor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='supervised_projects')
     title = models.CharField(max_length=255, null=True, blank=True)
@@ -58,5 +50,7 @@ class Submission(models.Model):
     version = models.PositiveIntegerField(default=1)
     comment = models.TextField(null=True, blank=True)
     is_approved = models.BooleanField(default=False)
+    is_rejected = models.BooleanField(default=False)
+    rejection_comment = models.TextField(null=True, blank=True)
     is_read = models.BooleanField(default=False)
     submitted_at = models.DateTimeField(auto_now_add=True)
