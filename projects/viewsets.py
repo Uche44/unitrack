@@ -19,6 +19,9 @@ class ProjectViewSet(ReadOnlyModelViewSet):
         if user.role == 'admin':
             return Project.objects.all()
 
+        if project.is_approved == True:
+            return Project.objects.filter(is_approved=True)    
+
         return Project.objects.none()
 
 

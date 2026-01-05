@@ -26,36 +26,6 @@ class ProjectSessionView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# create project
-
-# class CreateProjectView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request):
-#         user = request.user
-
-#         if user.role != 'student':
-#             return Response(
-#                 {"error": "Only students can create projects"},
-#                 status=status.HTTP_403_FORBIDDEN
-#             )
-
-        # data = request.data.copy()
-        # data['student'] = user.id   
-
-        # serializer = ProjectCreateSerializer(data=data)
-
-        # if serializer.is_valid():
-        #     project = serializer.save()
-        #     return Response(
-        #         {
-        #             "message": "Project created successfully",
-        #             "project": serializer.data
-        #         },
-        #         status=status.HTTP_201_CREATED
-        #     )
-
-        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CreateProjectView(APIView):
     permission_classes = [IsAuthenticated]
@@ -78,7 +48,7 @@ class CreateProjectView(APIView):
 
         data = request.data.copy()
         data['student'] = user.id
-        data['supervisor'] = user.supervisor.id  # ✅ ADD THIS LINE - Assign the student's supervisor
+        data['supervisor'] = user.supervisor.id  
 
         serializer = ProjectCreateSerializer(data=data)
 
@@ -200,10 +170,7 @@ class ApproveRejectProposalView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, project_id):
-        """
-        Approve or reject a project proposal.
-        Only supervisors assigned to the project can perform this action.
-        """
+       
         user = request.user
 
         # Verify user is a supervisor
