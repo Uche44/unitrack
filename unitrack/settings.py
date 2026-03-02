@@ -19,7 +19,9 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = 'django-insecure-7e$+hi!q^%fpe!wa-j+zjfxl2h&1^7lezt^bfiuid!i=@2p-17'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('RENDER') is None  # False on Render, True locally
+
+IS_PRODUCTION = not DEBUG
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -86,9 +88,9 @@ SIMPLE_JWT = {
     # These are the important settings for cookie-based auth
     'AUTH_COOKIE': 'access_token',  
     'AUTH_COOKIE_REFRESH': 'refresh_token',  
-    'AUTH_COOKIE_SECURE': False,  
+    'AUTH_COOKIE_SECURE': IS_PRODUCTION,  # True in prod (HTTPS required)
     'AUTH_COOKIE_HTTP_ONLY': True,
-    'AUTH_COOKIE_SAMESITE': 'Lax',  
+    'AUTH_COOKIE_SAMESITE': 'None' if IS_PRODUCTION else 'Lax',  # None for cross-domain
     'AUTH_COOKIE_PATH': '/',
     
     # Tell SimpleJWT to check cookies for the token
@@ -183,13 +185,13 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-SESSION_COOKIE_SECURE = False     
+SESSION_COOKIE_SECURE = IS_PRODUCTION
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'None' if IS_PRODUCTION else 'Lax'
 
-CSRF_COOKIE_SECURE = False        
+CSRF_COOKIE_SECURE = IS_PRODUCTION
 CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'None' if IS_PRODUCTION else 'Lax'
 
 JWT_AUTH_COOKIE = "access_token"
 JWT_AUTH_REFRESH_COOKIE = "refresh_token"

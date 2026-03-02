@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.conf import settings
 from rest_framework import generics, permissions
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework.views import APIView
@@ -55,8 +56,8 @@ class LoginView(TokenObtainPairView):
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=False,   
-            samesite='Lax',
+            secure=settings.IS_PRODUCTION,
+            samesite='None' if settings.IS_PRODUCTION else 'Lax',
             max_age=3600,      
             path='/',
         )
@@ -64,8 +65,8 @@ class LoginView(TokenObtainPairView):
             key="refresh_token",
             value=refresh_token,
             httponly=True,
-            secure=False,   
-            samesite='Lax',
+            secure=settings.IS_PRODUCTION,
+            samesite='None' if settings.IS_PRODUCTION else 'Lax',
             max_age=86400,     
             path='/',
         )
@@ -95,8 +96,8 @@ class RefreshTokenView(APIView):
                 key="access_token",
                 value=new_access_token,
                 httponly=True,
-                secure=False,
-                samesite='Lax',
+                secure=settings.IS_PRODUCTION,
+                samesite='None' if settings.IS_PRODUCTION else 'Lax',
             )
             return response
 
