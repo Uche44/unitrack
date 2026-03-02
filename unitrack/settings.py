@@ -23,6 +23,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
+    "unitrack-two.vercel.app",
     "unitrack-backend-rrwz.onrender.com",
 ]
 # ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split(",")
@@ -166,6 +167,7 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173", 
     "http://127.0.0.1:5173",
+    "https://unitrack-two.vercel.app",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
