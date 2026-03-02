@@ -6,6 +6,8 @@ Django==5.2.8
 django-cloudinary-storage==0.3.0
 django-cors-headers==4.9.0
 django-extensions==4.1
+dj-database-url
+psycopg2-binary
 djangorestframework==3.16.1
 djangorestframework_simplejwt==5.5.1
 dotenv==0.9.9
