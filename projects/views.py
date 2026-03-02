@@ -67,6 +67,8 @@ class CreateProjectView(APIView):
 
 # createsubmission
 
+# createsubmission
+
 class CreateSubmissionView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -85,6 +87,28 @@ class CreateSubmissionView(APIView):
 
         if not file:
             return Response({"error": "File is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Enforce sequential submission order
+        # proposal -> chapter_one -> chapter_two -> final_report
+        
+        if milestone == 'chapter_one':
+             # Check if proposal is approved
+            proposal = Submission.objects.filter(project=project, milestone='proposal', is_approved=True).exists()
+            if not proposal:
+                return Response({"error": "Proposal must be approved before submitting Chapter One"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        elif milestone == 'chapter_two':
+            # Check if chapter_one is approved
+            chapter_one = Submission.objects.filter(project=project, milestone='chapter_one', is_approved=True).exists()
+            if not chapter_one:
+                 return Response({"error": "Chapter One must be approved before submitting Chapter Two"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        elif milestone == 'final_report':
+            # Check if chapter_two is approved
+            chapter_two = Submission.objects.filter(project=project, milestone='chapter_two', is_approved=True).exists()
+            if not chapter_two:
+                 return Response({"error": "Chapter Two must be approved before submitting Final Report"}, status=status.HTTP_400_BAD_REQUEST)
+
 
         # Determine next version for this milestone
         last_submission = (
@@ -145,15 +169,17 @@ class SupervisorStudentProjectView(APIView):
         for p in all_projects:
             print(f"   - Project {p.id}: supervisor_id={p.supervisor_id}, student_id={p.student_id}")
 
+        # Get the LATEST project for this student (ordered by creation date)
         project = (
             Project.objects
             .filter(student_id=student_id, supervisor=request.user)
             .select_related("student", "supervisor")
             .prefetch_related("submissions")
+            .order_by('-created_at')  # Get the most recent project
             .first()
         )
 
-        print(f"🔍 DEBUG: Project found for current supervisor: {project}")
+        print(f"🔍 DEBUG: Latest project found for current supervisor: {project}")
 
         if not project:
             return Response(
@@ -161,31 +187,34 @@ class SupervisorStudentProjectView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+
+
         from .serializers import ProjectDetailSerializer
         serializer = ProjectDetailSerializer(project)
         return Response(serializer.data)
 
 
-class ApproveRejectProposalView(APIView):
+class ApproveRejectSubmissionView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, project_id):
+    def post(self, request, submission_id):
        
         user = request.user
 
         # Verify user is a supervisor
         if user.role != 'supervisor':
             return Response(
-                {"error": "Only supervisors can approve or reject proposals"},
+                {"error": "Only supervisors can approve or reject submissions"},
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # Get the project
+        # Get the submission
         try:
-            project = Project.objects.select_related('student', 'supervisor').get(id=project_id)
-        except Project.DoesNotExist:
+            submission = Submission.objects.get(id=submission_id)
+            project = submission.project
+        except Submission.DoesNotExist:
             return Response(
-                {"error": "Project not found"},
+                {"error": "Submission not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
 
@@ -205,34 +234,28 @@ class ApproveRejectProposalView(APIView):
         action = serializer.validated_data['action']
         comment = serializer.validated_data.get('comment', '')
 
-        # Get the latest proposal submission
-        latest_proposal = (
-            Submission.objects
-            .filter(project=project, milestone='proposal')
-            .order_by('-version')
-            .first()
-        )
-
-        if not latest_proposal:
-            return Response(
-                {"error": "No proposal submission found for this project"},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
         # Perform the action
         if action == 'approve':
-            latest_proposal.is_approved = True
-            latest_proposal.is_rejected = False
-            latest_proposal.rejection_comment = None
-            latest_proposal.save()
+            submission.is_approved = True
+            submission.is_rejected = False
+            submission.rejection_comment = None
+            submission.save()
 
-            # Update project status
-            project.status = 'proposal_approved'
-            project.is_approved = True
+            # Update project status based on milestone
+            if submission.milestone == 'proposal':
+                project.status = 'proposal_approved'
+                project.is_approved = True
+            elif submission.milestone == 'final_report':
+                project.status = 'completed'
+            # else: for chapter_one and chapter_two, we might keep it as 'in_progress' or 'proposal_approved'
+            # Let's set it to 'in_progress' if it's past proposal
+            elif submission.milestone in ['chapter_one', 'chapter_two']:
+                project.status = 'in_progress'
+            
             project.save()
 
             return Response({
-                "message": "Proposal approved successfully",
+                "message": "Submission approved successfully",
                 "project": {
                     "id": project.id,
                     "status": project.status,
@@ -241,18 +264,19 @@ class ApproveRejectProposalView(APIView):
             }, status=status.HTTP_200_OK)
 
         elif action == 'reject':
-            latest_proposal.is_approved = False
-            latest_proposal.is_rejected = True
-            latest_proposal.rejection_comment = comment
-            latest_proposal.save()
+            submission.is_approved = False
+            submission.is_rejected = True
+            submission.rejection_comment = comment
+            submission.save()
 
-            # Keep project status as proposal_pending
-            project.status = 'proposal_pending'
-            project.is_approved = False
-            project.save()
+            # If proposal is rejected, reset project status
+            if submission.milestone == 'proposal':
+                project.status = 'proposal_pending'
+                project.is_approved = False
+                project.save()
 
             return Response({
-                "message": "Proposal rejected",
+                "message": "Submission rejected",
                 "project": {
                     "id": project.id,
                     "status": project.status,
@@ -260,3 +284,75 @@ class ApproveRejectProposalView(APIView):
                 },
                 "rejection_comment": comment
             }, status=status.HTTP_200_OK)
+
+
+import requests
+import io
+from pypdf import PdfWriter
+from django.http import HttpResponse
+
+class DownloadFullReportView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id):
+        try:
+            project = Project.objects.get(id=project_id)
+        except Project.DoesNotExist:
+             return Response({"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Ensure user has access
+        if request.user.role == 'student' and project.student != request.user:
+             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+        if request.user.role == 'supervisor' and project.supervisor != request.user:
+             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        # Check if project deemed complete or specifically check final report approval
+        # We'll just check if there are approved submissions for all stages, or at least some.
+        # But user asked for "after final report is approved".
+        
+        # We can also just fetch all approved submissions in order.
+        milestones_order = ['proposal', 'chapter_one', 'chapter_two', 'final_report']
+        
+        approved_submissions = []
+        for milestone in milestones_order:
+            # Get latest approved submission for this milestone
+            sub = Submission.objects.filter(
+                project=project, 
+                milestone=milestone, 
+                is_approved=True
+            ).order_by('-version').first()
+            
+            if sub:
+                approved_submissions.append(sub)
+        
+        if not approved_submissions:
+             return Response({"error": "No approved submissions found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Merge PDFs
+        merger = PdfWriter()
+        
+        for sub in approved_submissions:
+            if not sub.file_url:
+                continue
+                
+            try:
+                response = requests.get(sub.file_url)
+                if response.status_code == 200:
+                    pdf_content = io.BytesIO(response.content)
+                    merger.append(pdf_content)
+            except Exception as e:
+                print(f"Error downloading file {sub.file_url}: {e}")
+                # Continue or fail? Let's continue and try to merge what we have.
+
+        output_buffer = io.BytesIO()
+        merger.write(output_buffer)
+        merger.close()
+        
+        output_buffer.seek(0)
+        
+        filename = f"{project.title.replace(' ', '_')}_Full_Report.pdf"
+        
+        response = HttpResponse(output_buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response

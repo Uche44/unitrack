@@ -1,11 +1,16 @@
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from .models import Project, Submission
-from .serializers import ProjectSerializer, SubmissionSerializer
+from .serializers import ProjectSerializer, SubmissionSerializer, ProjectDetailSerializer
 
 class ProjectViewSet(ReadOnlyModelViewSet):
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return ProjectDetailSerializer
+        return ProjectSerializer
 
     def get_queryset(self):
         user = self.request.user

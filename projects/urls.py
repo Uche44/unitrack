@@ -24,7 +24,8 @@ from .views import (
     CreateProjectView, 
     CreateSubmissionView, 
     SupervisorStudentProjectView,
-    ApproveRejectProposalView
+    ApproveRejectSubmissionView,
+    DownloadFullReportView
 )
 from .viewsets import ProjectViewSet, SubmissionViewSet
 
@@ -33,8 +34,9 @@ urlpatterns = [
     path("supervisor/student/<int:student_id>/project/", SupervisorStudentProjectView.as_view(), name="supervisor-student-project"),
     path("projects/session/", ProjectSessionView.as_view(), name="project-session"),
     path("projects/create/", CreateProjectView.as_view(), name="create-project"),
-    path("projects/<int:project_id>/proposal/action/", ApproveRejectProposalView.as_view(), name="proposal-action"),
+    path("submissions/<int:submission_id>/action/", ApproveRejectSubmissionView.as_view(), name="submission-action"),
     path("submissions/create/", CreateSubmissionView.as_view(), name="create-submission"),
+    path("projects/<int:project_id>/download-report/", DownloadFullReportView.as_view(), name="download-full-report"),
 ]
 
 # Router URLs last
