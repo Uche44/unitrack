@@ -19,17 +19,10 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = 'django-insecure-7e$+hi!q^%fpe!wa-j+zjfxl2h&1^7lezt^bfiuid!i=@2p-17'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('RENDER') is None  # False on Render, True locally
-
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 IS_PRODUCTION = not DEBUG
 
-ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    "unitrack-two.vercel.app",
-    "unitrack-backend-rrwz.onrender.com",
-]
-# ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 
 # Application definition

@@ -10,6 +10,14 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id','full_name', 'email', 'password', 'role', 'department', 'matric_no', 'staff_id', 'is_approved','is_assigned','is_fully_booked',]
 
+    def validate_matric_no(self, value):
+        # Convert empty string to None to avoid unique constraint violations
+        return value if value else None
+
+    def validate_staff_id(self, value):
+        # Convert empty string to None to avoid unique constraint violations
+        return value if value else None
+
     def create(self, validated_data):
         password = validated_data.pop('password')
         role = validated_data.get("role")
@@ -19,9 +27,8 @@ class UserSerializer(serializers.ModelSerializer):
         else:
             validated_data["is_approved"] = True
 
-        user = User.objects.create_user(**validated_data)
-        user.set_password(password)
-        user.save()
+        # Pass password directly so create_user hashes it in one step
+        user = User.objects.create_user(password=password, **validated_data)
 
         return user
 
