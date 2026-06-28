@@ -174,6 +174,7 @@ const SupervisorForm: React.FC = () => {
         console.error("Error:", error);
         alert("Network error. Please check your connection.");
       }
+      throw error;
     }
   };
 
