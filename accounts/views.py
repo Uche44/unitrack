@@ -37,16 +37,19 @@ class LoginView(TokenObtainPairView):
         refresh_token = str(refresh)
 
         response = Response(
-            {"message": "Login successful",
-               "user": {
-            "id": user.id, 
-            "email": user.email,
-            "role": user.role,
-            "full_name": user.full_name,
-            "staff_id": user.staff_id, 
-            "matric_no": user.matric_no,
-            "is_approved": user.is_approved,
-        }
+            {
+                "message": "Login successful",
+                "access": access_token,
+                "refresh": refresh_token,
+                "user": {
+                    "id": user.id, 
+                    "email": user.email,
+                    "role": user.role,
+                    "full_name": user.full_name,
+                    "staff_id": user.staff_id, 
+                    "matric_no": user.matric_no,
+                    "is_approved": user.is_approved,
+                }
              },
             status=status.HTTP_200_OK
         )
@@ -71,9 +74,6 @@ class LoginView(TokenObtainPairView):
             path='/',
         )
 
-        response.data.pop('access', None)
-        response.data.pop('refresh', None)
-
         return response
     
 
@@ -82,7 +82,7 @@ class LoginView(TokenObtainPairView):
 
 class RefreshTokenView(APIView):
     def post(self, request):
-        refresh_token = request.COOKIES.get("refresh_token")
+        refresh_token = request.COOKIES.get("refresh_token") or request.data.get("refresh") or request.data.get("refresh_token")
 
         if not refresh_token:
             return Response({"error": "Refresh token not provided"}, status=status.HTTP_400_BAD_REQUEST)
@@ -91,13 +91,17 @@ class RefreshTokenView(APIView):
             refresh = RefreshToken(refresh_token)
             new_access_token = str(refresh.access_token)
 
-            response = Response({"message": "Token refreshed"}, status=status.HTTP_200_OK)
+            response = Response({
+                "message": "Token refreshed",
+                "access": new_access_token
+            }, status=status.HTTP_200_OK)
             response.set_cookie(
                 key="access_token",
                 value=new_access_token,
                 httponly=True,
                 secure=settings.IS_PRODUCTION,
                 samesite='None' if settings.IS_PRODUCTION else 'Lax',
+                path='/',
             )
             return response
 
