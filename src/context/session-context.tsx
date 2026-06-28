@@ -18,7 +18,7 @@ interface SessionStore {
 export const useSessionStore = create<SessionStore>((set) => {
   const fetchSession = async () => {
     try {
-      const res = await api.get("/projects/session/");
+      const res = await api.get("/api/projects/session/");
 
       if (res.status === 200) {
         const data = res.data;

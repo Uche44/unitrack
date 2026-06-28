@@ -137,6 +137,14 @@ const LoginForm: React.FC = () => {
       if (res.status === 200) {
         console.log("login successful:", res.data);
 
+        // Save tokens in localStorage if they are returned in the response body
+        if (res.data.access) {
+          localStorage.setItem("access_token", res.data.access);
+        }
+        if (res.data.refresh) {
+          localStorage.setItem("refresh_token", res.data.refresh);
+        }
+
         const userRole = res.data.user?.role;
 
         // localStorage.setItem("userRole", userRole);
