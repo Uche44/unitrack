@@ -103,10 +103,10 @@ class AssignSupervisorSerializer(serializers.Serializer):
             raise serializers.ValidationError("Selected user is not a supervisor.")
 
 
-        # Prevent supervisor overload
-        if supervisor.students_under_supervision.count() + len(student_ids) > 5:
+        # Prevent supervisor overload based on explicit capacity
+        if supervisor.students_under_supervision.count() + len(student_ids) > supervisor.capacity:
             raise serializers.ValidationError(
-                f"{supervisor.full_name} cannot take more than 5 students total."
+                f"{supervisor.full_name} cannot take more than {supervisor.capacity} students total."
             )
 
         # Validate students
@@ -148,7 +148,7 @@ class AssignSupervisorSerializer(serializers.Serializer):
 
     # Update supervisor booking status AFTER assigning the students
         total_students = supervisor.students_under_supervision.count()
-        supervisor.is_fully_booked = total_students >= 5
+        supervisor.is_fully_booked = total_students >= supervisor.capacity
         supervisor.save()
 
         return students

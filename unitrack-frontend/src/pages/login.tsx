@@ -8,8 +8,7 @@ import { Mail, Lock, ArrowRight, Info, CheckCircle } from "lucide-react";
 import api from "../lib/api";
 import { useNavigate } from "react-router-dom";
 import { useUserStore } from "../context/user-context";
-// import GuestRoleSelector from "../components/guest-role-selector";
-// import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address."),
@@ -121,7 +120,6 @@ const LoginForm: React.FC = () => {
   const navigate = useNavigate();
   const setUser = useUserStore((state) => state.setUser);
   // const [showGuestSelector, setShowGuestSelector] = useState(false);
-
 
   const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
     try {
@@ -302,23 +300,9 @@ const LoginForm: React.FC = () => {
 
         {/* Footer */}
         <footer className="mt-8 text-center text-xs text-gray-500 leading-relaxed">
-          Need an account for administration? Please contact{" "}
-          <span className="text-green-600 font-medium">
-            support@unitrack.com
-          </span>{" "}
-          for assistance.
+          Go to <Link to="/">home</Link>
         </footer>
       </div>
-
-      {/* Guest Role Selector Modal */}
-      {/* {showGuestSelector && (
-        <div
-          className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4"
-          onClick={() => setShowGuestSelector(false)}
-        >
-          <GuestRoleSelector onClose={() => setShowGuestSelector(false)} />
-        </div>
-      )} */}
     </div>
   );
 };

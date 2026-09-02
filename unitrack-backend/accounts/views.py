@@ -122,7 +122,10 @@ class LogoutView(APIView):
 
 @api_view(["GET"])
 def approved_supervisors(_request):
-    supervisors = User.objects.filter(role="supervisor", is_approved=True, is_fully_booked=False)
+    supervisors = [
+        s for s in User.objects.filter(role="supervisor", is_approved=True)
+        if s.remaining_capacity > 0
+    ]
     serializer = SupervisorSerializer(supervisors, many=True)
     return Response(serializer.data)
 
@@ -211,10 +214,26 @@ class SupervisorStudentsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, supervisor_id, student_id=None):
+        user = request.user
+
+        # Students may never list supervisees; supervisors may only view their
+        # own students. Admins may view any supervisor's students.
+        if user.role == 'student':
+            return Response(
+                {"error": "Forbidden"}, status=status.HTTP_403_FORBIDDEN
+            )
+        if user.role == 'supervisor' and supervisor_id != user.id:
+            return Response(
+                {"error": "Forbidden"}, status=status.HTTP_403_FORBIDDEN
+            )
+
         supervisor = User.objects.filter(id=supervisor_id, role='supervisor').first()
 
         if not supervisor:
-            return Response({"error": "Supervisor not found"}, status=404)
+            return Response(
+                {"error": "Supervisor not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         students = supervisor.students_under_supervision.all()
 
@@ -234,10 +253,24 @@ class SupervisorStudentsView(APIView):
 
 
 class StudentDetailView(RetrieveAPIView):
-    queryset = User.objects.all()
     serializer_class = StudentWithSupervisorSerializer
     lookup_field = "id"          
     lookup_url_kwarg = "student_id"
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.role == 'admin':
+            return User.objects.all()
+
+        if user.role == 'supervisor':
+            return user.students_under_supervision.all()
+
+        if user.role == 'student':
+            return User.objects.filter(id=user.id)
+
+        return User.objects.none()
 
 
 # class GuestLoginView(APIView):
@@ -319,3 +352,25 @@ class StudentDetailView(RetrieveAPIView):
 #                 {"error": f"Guest login failed: {str(e)}"},
 #                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
 #             )
+class AuthMeView(APIView):
+    """Return the authenticated caller's identity.
+
+    Used by the frontend WebMCP tool hosts to confirm that the locally
+    persisted user agrees with the server-side authenticated role before any
+    tool is registered. Never trusts client-supplied identifiers.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response(
+            {
+                "id": user.id,
+                "email": user.email,
+                "role": user.role,
+                "full_name": user.full_name,
+            },
+            status=status.HTTP_200_OK,
+        )
+

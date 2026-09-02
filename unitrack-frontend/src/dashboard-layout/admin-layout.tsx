@@ -4,6 +4,15 @@ import { Outlet } from "react-router-dom";
 import { GraduationCap, Menu } from "lucide-react";
 import Sidebar from "../components/sidebar";
 import { useUserStore } from "../context/user-context";
+import ToolHost from "../lib/webmcp/tool-host";
+import {
+  findStalledStudents,
+  findStalledStudentsDefinition,
+} from "../lib/webmcp/tools/find-stalled-students";
+import {
+  suggestSupervisorAssignment,
+  suggestSupervisorAssignmentDefinition,
+} from "../lib/webmcp/tools/suggest-supervisor-assignment";
 
 const AdminDashboardLayout: React.FC = () => {
   const user = useUserStore((state) => state.user);
@@ -63,6 +72,17 @@ const AdminDashboardLayout: React.FC = () => {
         </header>
 
         <Outlet />
+        <ToolHost
+          role="admin"
+          tools={[
+            findStalledStudentsDefinition,
+            suggestSupervisorAssignmentDefinition,
+          ]}
+          runners={{
+            find_stalled_students: findStalledStudents,
+            suggest_supervisor_assignment: suggestSupervisorAssignment,
+          }}
+        />
       </main>
     </div>
   );

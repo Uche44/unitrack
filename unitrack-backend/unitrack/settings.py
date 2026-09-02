@@ -57,6 +57,7 @@ MIDDLEWARE = [
 ]
 
 
+
 AUTH_USER_MODEL = 'accounts.User'
 
 
@@ -131,10 +132,17 @@ WSGI_APPLICATION = 'unitrack.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+_db_config = dj_database_url.config(
+    default=f'sqlite:///{BASE_DIR / "db.sqlite3"}'
+)
+
+# Run SQLite tests against an in-memory database for speed/isolation.
+# Postgres/other engines are unaffected.
+if _db_config.get('ENGINE') == 'django.db.backends.sqlite3':
+    _db_config['TEST'] = {'NAME': ':memory:'}
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}'
-    )
+    'default': _db_config,
 }
 
 

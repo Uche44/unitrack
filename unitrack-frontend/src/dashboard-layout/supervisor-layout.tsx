@@ -4,6 +4,19 @@ import { Outlet } from "react-router-dom";
 import { GraduationCap, Menu } from "lucide-react";
 import Sidebar from "../components/sidebar";
 import { useUserStore } from "../context/user-context";
+import ToolHost from "../lib/webmcp/tool-host";
+import {
+  getRecurringFeedbackThemes,
+  recurringFeedbackThemeDefinition,
+} from "../lib/webmcp/tools/get-recurring-feedback-themes";
+import {
+  explainChapterChanges,
+  explainChapterChangesDefinition,
+} from "../lib/webmcp/tools/explain-chapter-changes";
+import {
+  findStalledStudents,
+  findStalledStudentsDefinition,
+} from "../lib/webmcp/tools/find-stalled-students";
 
 const SupervisorDashboardLayout: React.FC = () => {
   const user = useUserStore((state) => state.user);
@@ -63,6 +76,19 @@ const SupervisorDashboardLayout: React.FC = () => {
         </header>
 
         <Outlet />
+        <ToolHost
+          role="supervisor"
+          tools={[
+            recurringFeedbackThemeDefinition,
+            explainChapterChangesDefinition,
+            findStalledStudentsDefinition,
+          ]}
+          runners={{
+            get_recurring_feedback_themes: getRecurringFeedbackThemes,
+            explain_chapter_changes: explainChapterChanges,
+            find_stalled_students: findStalledStudents,
+          }}
+        />
       </main>
     </div>
   );

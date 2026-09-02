@@ -52,7 +52,11 @@ const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
         path: "/supervisor/reviews",
         icon: <ClipboardList size={20} />,
       },
-      { name: "Settings", path: "/settings", icon: <Settings size={20} /> },
+      {
+        name: "Profile",
+        path: "/supervisor-dashboard/profile",
+        icon: <Settings size={20} />,
+      },
     ],
 
     student: [
@@ -71,7 +75,11 @@ const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
         path: "/student/upload",
         icon: <FilePlus size={20} />,
       },
-      { name: "Settings", path: "/settings", icon: <Settings size={20} /> },
+      {
+        name: "Profile",
+        path: "/student-dashboard/profile",
+        icon: <Settings size={20} />,
+      },
     ],
   };
 

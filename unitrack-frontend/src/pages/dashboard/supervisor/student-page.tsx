@@ -30,6 +30,9 @@ const StudentPage = () => {
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<
     number | null
   >(null);
+  const [contactType, setContactType] = useState("meeting");
+  const [contactNote, setContactNote] = useState("");
+  const [contactLoading, setContactLoading] = useState(false);
 
   const user = useUserStore((state) => state.user);
 
@@ -136,6 +139,24 @@ const StudentPage = () => {
     }
   };
 
+  // const handleRecordContact = async () => {
+  //   if (!student) return;
+  //   setContactLoading(true);
+  //   try {
+  //     await api.post("/api/supervisor/contact/", {
+  //       student_id: student.id,
+  //       contact_type: contactType,
+  //       note: contactNote,
+  //     });
+  //     toast.success("Contact logged successfully");
+  //     setContactNote("");
+  //   } catch (caught: any) {
+  //     toast.error(caught?.response?.data?.error ?? "Failed to record contact");
+  //   } finally {
+  //     setContactLoading(false);
+  //   }
+  // };
+
   if (loading)
     return <div className="p-8 text-center text-gray-500">Loading...</div>;
   if (!student)
@@ -176,6 +197,38 @@ const StudentPage = () => {
           </span>
         </div>
       </section>
+
+      {/* Record contact card */}
+      {/* <section className="h-fit w-full bg-white px-6 py-6 rounded-2xl shadow-sm">
+        <h2 className="text-2xl font-bold mb-4">Record contact</h2>
+        <div className="grid gap-3 md:grid-cols-3">
+          <select
+            value={contactType}
+            onChange={(event) => setContactType(event.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="meeting">Meeting</option>
+            <option value="message">Message</option>
+            <option value="email">Email</option>
+            <option value="other">Other</option>
+          </select>
+          <input
+            value={contactNote}
+            onChange={(event) => setContactNote(event.target.value)}
+            placeholder="Brief summary (optional)"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm md:col-span-2"
+          />
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleRecordContact}
+            disabled={contactLoading}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium disabled:opacity-50"
+          >
+            {contactLoading ? "Saving..." : "Log contact"}
+          </button>
+        </div>
+      </section> */}
 
       {/* Project Details Card */}
       <section className="h-fit w-full bg-white px-6 py-6 rounded-2xl shadow-sm">
@@ -276,13 +329,13 @@ const StudentPage = () => {
               ) : (
                 <div className="space-y-4">
                   {/* Simply map all submissions, latest first */}
-                  {[...project.submissions]
-                    .sort(
+                  {(() => {
+                    const sortedSubmissions = [...project.submissions].sort(
                       (a, b) =>
                         new Date(b.submittedAt).getTime() -
                         new Date(a.submittedAt).getTime(),
-                    )
-                    .map((submission) => (
+                    );
+                    return sortedSubmissions.map((submission, index) => (
                       <div
                         key={submission.id}
                         className={`border rounded-lg p-4 ${
@@ -302,6 +355,11 @@ const StudentPage = () => {
                               <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
                                 v{submission.version}
                               </span>
+                              {index === 0 && (
+                                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                                  Latest
+                                </span>
+                              )}
                             </div>
                             <p className="text-sm text-gray-500">
                               {new Date(
@@ -339,15 +397,18 @@ const StudentPage = () => {
                               )}
                           </div>
 
-                          <button
-                            onClick={() => setPreviewUrl(submission.fileUrl)}
-                            className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm font-medium"
-                          >
-                            View Document
-                          </button>
+                          <div className="flex flex-col items-end gap-2">
+                            <button
+                              onClick={() => setPreviewUrl(submission.fileUrl)}
+                              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm font-medium"
+                            >
+                              View Document
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    ))}
+                    ));
+                  })()}
                 </div>
               )}
             </div>

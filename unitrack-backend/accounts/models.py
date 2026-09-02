@@ -19,6 +19,16 @@ class UserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
+class Tag(models.Model):
+    """A normalized research/topic or expertise tag shared by projects
+    (topic tags) and supervisors (expertise tags)."""
+
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 class User(AbstractUser):
     ROLE_CHOICES = (
         ('student', 'Student'),
@@ -35,6 +45,14 @@ class User(AbstractUser):
     is_approved = models.BooleanField(default=True)  # default for students
     is_assigned = models.BooleanField(default=False, null=True, blank=True)
     is_fully_booked = models.BooleanField(default=False, null=True, blank=True) #for supervisor
+    benchmark_opt_in = models.BooleanField(default=False)
+    areas_of_expertise = models.CharField(max_length=500, blank=True, default="")
+    project_interests = models.CharField(max_length=500, blank=True, default="")
+    # explicit positive capacity; capacity decisions derive workload from this
+    capacity = models.PositiveIntegerField(default=5)
+    expertise_tags = models.ManyToManyField(
+        Tag, blank=True, related_name='supervisors'
+    )
     # is_guest = models.BooleanField(default=False)
     supervisor = models.ForeignKey(
         'self',
@@ -50,6 +68,18 @@ class User(AbstractUser):
     REQUIRED_FIELDS = []
 
     objects = UserManager()
+
+    @property
+    def current_load(self):
+        if self.role != 'supervisor':
+            return 0
+        return self.students_under_supervision.count()
+
+    @property
+    def remaining_capacity(self):
+        if self.role != 'supervisor':
+            return 0
+        return max(self.capacity - self.current_load, 0)
 
 
 

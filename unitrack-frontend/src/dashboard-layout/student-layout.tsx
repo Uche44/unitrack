@@ -4,10 +4,21 @@ import { Outlet } from "react-router-dom";
 import { GraduationCap, Menu } from "lucide-react";
 import Sidebar from "../components/sidebar";
 import { useUserStore } from "../context/user-context";
+import ToolHost from "../lib/webmcp/tool-host";
+import {
+  generateDefenseQuestions,
+  generateDefenseQuestionsDefinition,
+} from "../lib/webmcp/tools/generate-defense-questions";
+import {
+  compareMyProgress,
+  compareMyProgressDefinition,
+} from "../lib/webmcp/tools/compare-my-progress";
+import { useBenchmarkPreference } from "../lib/webmcp/use-benchmark-preference";
 
 const StudentDashboardLayout: React.FC = () => {
   const user = useUserStore((state) => state.user);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { optedIn } = useBenchmarkPreference();
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -63,6 +74,17 @@ const StudentDashboardLayout: React.FC = () => {
         </header>
 
         <Outlet />
+        <ToolHost
+          role="student"
+          tools={[
+            generateDefenseQuestionsDefinition,
+            ...(optedIn ? [compareMyProgressDefinition] : []),
+          ]}
+          runners={{
+            generate_defense_questions: generateDefenseQuestions,
+            ...(optedIn ? { compare_my_progress: compareMyProgress } : {}),
+          }}
+        />
       </main>
     </div>
   );

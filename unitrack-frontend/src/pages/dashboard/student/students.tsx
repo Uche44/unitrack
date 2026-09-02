@@ -6,6 +6,8 @@ import type { StudentResponse } from "../../../types/student";
 import { camelize } from "../../../types/camelize";
 import { useSessionStore } from "../../../context/session-context";
 import CreateSubmissions from "../../../components/create-submissions";
+import { useBenchmarkPreference } from "../../../lib/webmcp/use-benchmark-preference";
+import toast from "react-hot-toast";
 // import GuestBanner from "../../../components/guest-banner";
 
 const Students: React.FC = () => {
@@ -13,6 +15,8 @@ const Students: React.FC = () => {
   const [student, setStudent] = useState<StudentResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const currentSession = useSessionStore((state) => state.currentSession);
+  const { optedIn, setPreference, loading: preferenceLoading } =
+    useBenchmarkPreference();
 
   const student_id = user?.id;
 
@@ -128,6 +132,49 @@ const Students: React.FC = () => {
 
       {/* add submission */}
       <CreateSubmissions />
+
+      {/* Benchmarking preference */}
+      <section className="bg-white shadow-md border border-dashed border-green-600 rounded-lg p-6 mt-8">
+        <h2 className="text-2xl font-semibold text-green-700 mb-2">
+          Anonymous cohort comparison
+        </h2>
+        <p className="text-sm text-gray-600 mb-4">
+          We never share names, emails, IDs, or text. The agent only sees your
+          stage alongside aggregated counts and percentages for the cohort
+          (caller&apos;s department and active session). Aggregates are withheld
+          when fewer than five eligible students are available, and toggling
+          off immediately revokes the agent&apos;s access.
+        </p>
+        <label className="inline-flex items-center gap-3">
+          <input
+            type="checkbox"
+            disabled={preferenceLoading}
+            checked={optedIn}
+            onChange={async (event) => {
+              try {
+                await setPreference(event.target.checked);
+                toast.success(
+                  event.target.checked
+                    ? "Opt-in saved. The compare tool is now available."
+                    : "Opt-out saved. The compare tool is no longer available.",
+                );
+              } catch (caught: unknown) {
+                toast.error(
+                  caught instanceof Error
+                    ? caught.message
+                    : "Failed to update preference",
+                );
+              }
+            }}
+            className="h-4 w-4 text-green-600"
+          />
+          <span className="text-gray-800 font-medium">
+            {optedIn
+              ? "I want to compare my progress with my cohort."
+              : "Keep my progress private from cohort comparisons."}
+          </span>
+        </label>
+      </section>
     </section>
   );
 };

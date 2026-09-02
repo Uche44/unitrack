@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserSignupView, LoginView, RefreshTokenView, LogoutView, approved_supervisors, pending_supervisors, ApproveSupervisorView, AssignSupervisorView, unassigned_students, assigned_students, SupervisorStudentsView, StudentDetailView
+from .views import UserSignupView, LoginView, RefreshTokenView, LogoutView, approved_supervisors, pending_supervisors, ApproveSupervisorView, AssignSupervisorView, unassigned_students, assigned_students, SupervisorStudentsView, StudentDetailView, AuthMeView
 from . import views
 
 
@@ -21,6 +21,7 @@ urlpatterns = [
     path("assign-supervisor/", AssignSupervisorView.as_view(), name="assign-supervisor"),
     path("supervisors/<int:supervisor_id>/students/", SupervisorStudentsView.as_view()),
     path("supervisors/<int:supervisor_id>/students/<int:student_id>/", SupervisorStudentsView.as_view()),
-    path('students/<int:student_id>/', StudentDetailView.as_view(), name='students-detail')
+    path('students/<int:student_id>/', StudentDetailView.as_view(), name='students-detail'),
+    path('auth/me/', AuthMeView.as_view(), name='auth-me'),
 
 ]

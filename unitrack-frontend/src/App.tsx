@@ -14,7 +14,9 @@ import StudentPage from "./pages/dashboard/supervisor/student-page";
 import StudentDashboardLayout from "./dashboard-layout/student-layout";
 // import ProjectDash from "./pages/dashboard/student/projects";
 import ProjectDashboard from "./pages/dashboard/student/projects";
+import ProfilePage from "./pages/dashboard/profile";
 import { Toaster } from "react-hot-toast";
+import RequireRole from "./components/require-role";
 
 // import NotFound from "./components/NotFound";
 // import { Toaster } from "./components/ui/sonner";
@@ -41,9 +43,9 @@ const router = createBrowserRouter([
   {
     path: "/admin-dashboard",
     element: (
-      // <ProtectedRoutes>
-      <AdminDashboardLayout />
-      // </ProtectedRoutes>
+      <RequireRole role="admin">
+        <AdminDashboardLayout />
+      </RequireRole>
     ),
     children: [
       {
@@ -60,9 +62,9 @@ const router = createBrowserRouter([
   {
     path: "/supervisor-dashboard",
     element: (
-      // <ProtectedRoutes>
-      <SupervisorDashboardLayout />
-      // </ProtectedRoutes>
+      <RequireRole role="supervisor">
+        <SupervisorDashboardLayout />
+      </RequireRole>
     ),
     children: [
       {
@@ -73,15 +75,19 @@ const router = createBrowserRouter([
         path: "supervisors/:supervisorId/students/:studentId",
         element: <StudentPage />,
       },
+      {
+        path: "profile",
+        element: <ProfilePage />,
+      },
     ],
   },
 
   {
     path: "/student-dashboard",
     element: (
-      // <ProtectedRoutes>
-      <StudentDashboardLayout />
-      // </ProtectedRoutes>
+      <RequireRole role="student">
+        <StudentDashboardLayout />
+      </RequireRole>
     ),
     children: [
       {
@@ -91,6 +97,10 @@ const router = createBrowserRouter([
       {
         path: "students/project/",
         element: <ProjectDashboard />,
+      },
+      {
+        path: "profile",
+        element: <ProfilePage />,
       },
       // {
       //   path: "assign-supervisors",
