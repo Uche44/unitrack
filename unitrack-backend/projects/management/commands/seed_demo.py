@@ -1,9 +1,11 @@
 """Idempotent demo seed for the UniTrack WebMCP walkthrough.
 
-Seeds only Computer Science accounts using realistic Nigerian names for both
-supervisors (with lecturer titles) and students, so the cohort benchmark tool
-has at least five eligible students and the assignment/stalled tools have
-meaningful data.
+Seeds the hackathon judge accounts:
+- Supervisor: dr.chukwu@example.com (assigned to 5 students)
+- Student: obi@example.com (Obi Arinze) - up to Chapter 2 with 2 versions
+
+Includes additional students with varying progress, feedback themes, and
+unassigned students for testing the suggest supervisor tool.
 """
 
 from datetime import timedelta
@@ -24,65 +26,95 @@ from projects.models import (
 
 DEPARTMENT = "Computer Science"
 PASSWORD = "demo-pass-123"
-STALLED_DAYS = 30
+STALLED_DAYS = 35
 
+# Judge accounts
+JUDGE_SUPERVISOR = {
+    "email": "dr.chukwu@example.com",
+    "password": "c1234567",
+    "full_name": "Dr. Chukwu Okonkwo",
+    "expertise": "machine learning, nlp, data mining, recommendation systems",
+}
 
-SUPERVISOR_PROFILES = [
-    (
-        "prof-okonkwo@unitrack-demo.test",
-        "Prof. Adaeze Okonkwo",
-        "nlp, machine learning, recommender systems",
-    ),
-    (
-        "dr-balogun@unitrack-demo.test",
-        "Dr. Tunde Balogun",
-        "computer vision, medical imaging, deep learning",
-    ),
-    (
-        "dr-adeyemi@unitrack-demo.test",
-        "Dr. Ifeoma Adeyemi",
-        "robotics, embedded systems, control systems",
-    ),
-    (
-        "dr-okafor@unitrack-demo.test",
-        "Dr. Chinedu Okafor",
-        "data mining, anomaly detection, big data",
-    ),
-    (
-        "dr-ibrahim@unitrack-demo.test",
-        "Dr. Halima Ibrahim",
-        "cybersecurity, cryptography, network security",
-    ),
+JUDGE_STUDENT = {
+    "email": "obi@example.com",
+    "password": "o12qwera",
+    "full_name": "Obi Arinze",
+    "matric_no": "2022/001",
+    "interests": "machine learning, recommendation systems",
+}
+
+# Additional students under Dr. Chukwu (5 total including Obi)
+ADDITIONAL_STUDENTS = [
+    {
+        "email": "adaeze.nwosu@example.com",
+        "full_name": "Adaeze Nwosu",
+        "matric_no": "2022/002",
+        "interests": "nlp, sentiment analysis",
+        "progress": "proposal_pending",
+    },
+    {
+        "email": "chidi.eze@example.com",
+        "full_name": "Chidi Eze",
+        "matric_no": "2022/003",
+        "interests": "machine learning, computer vision",
+        "progress": "chapter_one_approved",
+    },
+    {
+        "email": "nneka.okeke@example.com",
+        "full_name": "Nneka Okeke",
+        "matric_no": "2022/004",
+        "interests": "data mining, analytics",
+        "progress": "chapter_one_pending",
+    },
+    {
+        "email": "emeka.obi@example.com",
+        "full_name": "Emeka Obi",
+        "matric_no": "2022/005",
+        "interests": "recommendation systems",
+        "progress": "stalled",
+    },
 ]
 
-
-ACTIVE_STUDENTS = [
-    ("ada.okafor@students.unitrack-demo.test", "Adaeze Okafor", "nlp, recommendation systems"),
-    ("tunde.balogun@students.unitrack-demo.test", "Tunde Balogun", "computer vision, medical imaging"),
-    ("ife.adeyemi@students.unitrack-demo.test", "Ifeoma Adeyemi", "robotics, embedded systems"),
-    ("chinedu.eze@students.unitrack-demo.test", "Chinedu Eze", "data mining, anomaly detection"),
-    ("halima.sani@students.unitrack-demo.test", "Halima Sani", "cybersecurity, cryptography"),
-    ("oluwaseun.adebayo@students.unitrack-demo.test", "Oluwaseun Adebayo", "machine learning, deep learning"),
-    ("chisom.okeke@students.unitrack-demo.test", "Chisom Okeke", "nlp, sentiment analysis"),
-    ("amaka.nwosu@students.unitrack-demo.test", "Amaka Nwosu", "computer vision, robotics"),
-]
-
-
-STALLED_STUDENTS = [
-    ("emeka.obi@students.unitrack-demo.test", "Emeka Obi", "robotics, embedded systems"),
-    ("yinka.adeola@students.unitrack-demo.test", "Yinka Adeola", "cybersecurity, network security"),
-]
-
-
+# Unassigned students for suggest supervisor tool testing
 UNASSIGNED_STUDENTS = [
-    ("bisi.akinwale@students.unitrack-demo.test", "Bisi Akinwale", "nlp, machine translation"),
-    ("damola.folarin@students.unitrack-demo.test", "Damola Folarin", "robotics, drone navigation"),
-    ("funke.adebisi@students.unitrack-demo.test", "Funke Adebisi", "data mining, healthcare analytics"),
+    {
+        "email": "bisi.akinwale@example.com",
+        "full_name": "Bisi Akinwale",
+        "matric_no": "2022/101",
+        "interests": "nlp, machine translation",
+    },
+    {
+        "email": "damola.folarin@example.com",
+        "full_name": "Damola Folarin",
+        "matric_no": "2022/102",
+        "interests": "machine learning, deep learning",
+    },
+    {
+        "email": "funke.adebisi@example.com",
+        "full_name": "Funke Adebisi",
+        "matric_no": "2022/103",
+        "interests": "data mining, healthcare analytics",
+    },
 ]
+
+# Feedback themes for testing
+FEEDBACK_THEMES = {
+    "literature_review": (
+        "The literature review needs more depth. "
+        "Please include more recent publications (2020-2024) and "
+        "provide better synthesis of existing work rather than just listing sources."
+    ),
+    "citation_formatting": (
+        "Citation formatting needs improvement. "
+        "Ensure all references follow APA 7th edition format consistently. "
+        "Check in-text citations match the reference list."
+    ),
+}
 
 
 class Command(BaseCommand):
-    help = "Seed the Computer Science demo dataset (3 login accounts + rich relations)."
+    help = "Seed the hackathon demo dataset with judge accounts."
 
     def add_arguments(self, parser):
         parser.add_argument("--password", default=PASSWORD)
@@ -91,29 +123,29 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         password = options["password"]
         stalled_days = options["stalled_days"]
+        
         with transaction.atomic():
             session = self._ensure_session()
             tags = self._ensure_tags()
             admin = self._ensure_admin(password)
-            supervisors = self._ensure_supervisors(password, tags)
-            lead_supervisor = supervisors[0]
-            student = self._ensure_student(password, lead_supervisor, session)
-            self._ensure_chapters(student, lead_supervisor)
-            self._ensure_active_students(supervisors, session)
-            self._ensure_stalled_students(supervisors, session, stalled_days)
+            supervisor = self._ensure_supervisor(password, tags)
+            judge_student = self._ensure_judge_student(password, supervisor, session)
+            self._ensure_judge_student_chapters(judge_student, supervisor)
+            self._ensure_additional_students(password, supervisor, session, stalled_days)
             self._ensure_unassigned_students(session)
 
         self.stdout.write(self.style.SUCCESS("Demo dataset ready."))
-        self.stdout.write(f"  admin     : {admin.email} / {password}")
-        self.stdout.write(f"  supervisor: {lead_supervisor.email} / {password}")
-        self.stdout.write(f"  student   : {student.email} / {password}")
+        self.stdout.write(f"  Admin     : {admin.email} / {password}")
+        self.stdout.write(f"  Supervisor: {supervisor.email} / {JUDGE_SUPERVISOR['password']}")
+        self.stdout.write(f"  Student   : {judge_student.email} / {JUDGE_STUDENT['password']}")
 
     def _ensure_session(self):
+        """Create 2025/2026 academic session."""
         session, _ = ProjectSession.objects.get_or_create(
-            session="2026/2027",
+            session="2025/2026",
             defaults={
                 "duration": "12 months",
-                "start_date": timezone.localdate() - timedelta(days=30),
+                "start_date": timezone.localdate() - timedelta(days=60),
                 "end_date": timezone.localdate() + timedelta(days=300),
                 "is_active": True,
             },
@@ -121,250 +153,391 @@ class Command(BaseCommand):
         return session
 
     def _ensure_tags(self):
-        names = ["nlp", "computer vision", "robotics", "data mining", "cybersecurity"]
+        """Create expertise/topic tags."""
+        names = ["nlp", "machine learning", "data mining", "recommendation systems", 
+                 "computer vision", "deep learning"]
         return {name: Tag.objects.get_or_create(name=name)[0] for name in names}
 
     def _ensure_admin(self, password):
+        """Create admin user."""
         admin, created = User.objects.get_or_create(
-            email="hod.cs@unitrack-demo.test",
+            email="admin@unitrack.test",
             defaults={
-                "full_name": "Dr. Ngozi Eze",
+                "full_name": "Admin User",
                 "role": "admin",
                 "department": DEPARTMENT,
                 "is_staff": True,
                 "is_superuser": True,
             },
         )
-        if not created:
-            admin.full_name = "Dr. Ngozi Eze"
-            admin.department = DEPARTMENT
-            admin.is_staff = True
-            admin.is_superuser = True
-            admin.set_password(password)
-            admin.save()
-        else:
-            admin.set_password(password)
-            admin.save()
+        admin.set_password(password)
+        admin.save()
         return admin
 
-    def _ensure_supervisors(self, password, tags):
-        supervisors = []
-        for email, name, expertise in SUPERVISOR_PROFILES:
-            supervisor, created = User.objects.get_or_create(
-                email=email,
-                defaults={
-                    "full_name": name,
-                    "role": "supervisor",
-                    "department": DEPARTMENT,
-                    "is_approved": True,
-                    "capacity": 5,
-                    "areas_of_expertise": expertise,
-                },
-            )
-            if created:
-                supervisor.set_password(password)
-                supervisor.save()
-            supervisors.append(supervisor)
-        supervisors[0].expertise_tags.set([tags["nlp"]])
-        return supervisors
-
-    def _ensure_student(self, password, supervisor, session):
-        student, created = User.objects.get_or_create(
-            email="student-demo@students.unitrack-demo.test",
+    def _ensure_supervisor(self, password, tags):
+        """Create Dr. Chukwu - the judge supervisor account."""
+        supervisor, created = User.objects.get_or_create(
+            email=JUDGE_SUPERVISOR["email"],
             defaults={
-                "full_name": "Emeka Onyebuchi",
+                "full_name": JUDGE_SUPERVISOR["full_name"],
+                "role": "supervisor",
+                "department": DEPARTMENT,
+                "is_approved": True,
+                "capacity": 10,
+                "areas_of_expertise": JUDGE_SUPERVISOR["expertise"],
+                "staff_id": "CS/001",
+            },
+        )
+        supervisor.set_password(JUDGE_SUPERVISOR["password"])
+        supervisor.is_approved = True
+        supervisor.save()
+        # Set expertise tags
+        supervisor.expertise_tags.set([
+            tags["machine learning"],
+            tags["nlp"],
+            tags["data mining"],
+            tags["recommendation systems"],
+        ])
+        return supervisor
+
+    def _ensure_judge_student(self, password, supervisor, session):
+        """Create Obi Arinze - the judge student account."""
+        student, created = User.objects.get_or_create(
+            email=JUDGE_STUDENT["email"],
+            defaults={
+                "full_name": JUDGE_STUDENT["full_name"],
                 "role": "student",
                 "department": DEPARTMENT,
-                "matric_no": "CSC/2023/099",
+                "matric_no": JUDGE_STUDENT["matric_no"],
                 "is_approved": True,
                 "is_assigned": True,
                 "supervisor": supervisor,
-                "project_interests": "nlp, recommendation systems",
+                "project_interests": JUDGE_STUDENT["interests"],
             },
         )
-        if created:
-            student.set_password(password)
-            student.save()
-            Project.objects.get_or_create(
-                student=student,
-                supervisor=supervisor,
-                session=session,
-                defaults={
-                    "title": "NLP-Based Course Recommender",
-                    "description": "Walkthrough project for the WebMCP demo.",
-                    "status": "in_progress",
-                    "is_approved": True,
-                },
-            )
+        student.set_password(JUDGE_STUDENT["password"])
+        student.is_approved = True
+        student.is_assigned = True
+        student.supervisor = supervisor
+        student.save()
+        
+        # Create project
+        Project.objects.get_or_create(
+            student=student,
+            defaults={
+                "supervisor": supervisor,
+                "session": session,
+                "title": "Machine Learning-Based Course Recommendation System",
+                "description": "A recommendation system for course selection using collaborative filtering and NLP.",
+                "status": "in_progress",
+                "is_approved": True,
+            },
+        )
         return student
 
-    def _ensure_chapters(self, student, supervisor):
+    def _ensure_judge_student_chapters(self, student, supervisor):
+        """Create Chapter 1 (approved) and Chapter 2 (v1 rejected, v2 pending review)."""
         project = student.projects.first()
         if not project:
             return
-        Submission.objects.get_or_create(
+
+        # Chapter 1 - Approved
+        chapter_one, _ = Submission.objects.get_or_create(
             project=project,
             milestone="chapter_one",
             version=1,
             defaults={
-                "file_url": "https://example.com/chapter-one-v1.pdf",
+                "file_url": "https://example.com/obi-chapter1-v1.pdf",
                 "extracted_text": (
                     "Chapter One: Introduction\n"
-                    "The objective is to evaluate citation issues in prior work.\n"
-                    "We used a mixed method approach with quantitative results.\n"
-                    "Natural Language Processing drives the analysis."
-                ),
-                "extraction_status": "success",
-                "is_approved": False,
-                "is_rejected": True,
-                "rejection_comment": (
-                    "Citation needs improvement and methodology is unclear."
-                ),
-            },
-        )
-        SubmissionReview.objects.get_or_create(
-            submission=project.submissions.first(),
-            reviewer=supervisor,
-            decision="rejected",
-            feedback=(
-                "Citation needs improvement and methodology is unclear. "
-                "Please revise the methodology section and update references."
-            ),
-        )
-        Submission.objects.get_or_create(
-            project=project,
-            milestone="chapter_one",
-            version=2,
-            defaults={
-                "file_url": "https://example.com/chapter-one-v2.pdf",
-                "extracted_text": (
-                    "Chapter One: Introduction\n"
-                    "The objective is to evaluate citation issues in prior work.\n"
-                    "We used a mixed method approach with quantitative results.\n"
-                    "Natural Language Processing drives the analysis.\n"
-                    "We expanded the methodology section with sampling and data sources."
+                    "This project proposes a machine learning-based course recommendation system.\n"
+                    "The system will use collaborative filtering and content-based approaches.\n"
+                    "Natural Language Processing will analyze student preferences."
                 ),
                 "extraction_status": "success",
                 "is_approved": True,
                 "is_rejected": False,
             },
         )
+        SubmissionReview.objects.get_or_create(
+            submission=chapter_one,
+            reviewer=supervisor,
+            defaults={
+                "decision": "approved",
+                "feedback": "Good introduction. Proceed to Chapter 2.",
+            },
+        )
 
-    def _ensure_active_students(self, supervisors, session):
-        states = ["in_progress"] * 6 + ["proposal_approved"] * 2
-        for index, (email, name, interests) in enumerate(ACTIVE_STUDENTS):
-            supervisor = supervisors[index % len(supervisors)]
-            matric = f"CSC/2023/{index + 100:03d}"
-            student, created = User.objects.get_or_create(
-                email=email,
-                defaults={
-                    "full_name": name,
-                    "role": "student",
-                    "department": DEPARTMENT,
-                    "matric_no": matric,
-                    "is_approved": True,
-                    "is_assigned": True,
-                    "supervisor": supervisor,
-                    "project_interests": interests,
-                },
-            )
-            if created:
-                student.set_password(PASSWORD)
-                student.save()
-            Project.objects.get_or_create(
-                student=student,
-                supervisor=supervisor,
-                session=session,
-                defaults={
-                    "title": f"{name.split()[-1]}'s Final Year Project",
-                    "status": states[index % len(states)],
-                    "is_approved": True,
-                },
-            )
+        # Chapter 2 - Version 1 (Rejected with feedback themes)
+        chapter_two_v1, _ = Submission.objects.get_or_create(
+            project=project,
+            milestone="chapter_two",
+            version=1,
+            defaults={
+                "file_url": "https://example.com/obi-chapter2-v1.pdf",
+                "extracted_text": (
+                    "Chapter Two: Literature Review\n"
+                    "This chapter reviews existing work on recommendation systems.\n"
+                    "Collaborative filtering was discussed by Smith (2019).\n"
+                    "Content-based approaches were explored by Jones (2018).\n"
+                    "Deep learning methods have shown promise."
+                ),
+                "extraction_status": "success",
+                "is_approved": False,
+                "is_rejected": True,
+                "rejection_comment": (
+                    f"{FEEDBACK_THEMES['literature_review']} "
+                    f"{FEEDBACK_THEMES['citation_formatting']}"
+                ),
+            },
+        )
+        SubmissionReview.objects.get_or_create(
+            submission=chapter_two_v1,
+            reviewer=supervisor,
+            defaults={
+                "decision": "rejected",
+                "feedback": (
+                    f"{FEEDBACK_THEMES['literature_review']} "
+                    f"{FEEDBACK_THEMES['citation_formatting']}"
+                ),
+            },
+        )
 
-    def _ensure_stalled_students(self, supervisors, session, stalled_days):
+        # Chapter 2 - Version 2 (Revised, pending review)
+        chapter_two_v2, _ = Submission.objects.get_or_create(
+            project=project,
+            milestone="chapter_two",
+            version=2,
+            defaults={
+                "file_url": "https://example.com/obi-chapter2-v2.pdf",
+                "extracted_text": (
+                    "Chapter Two: Literature Review\n"
+                    "This chapter provides a comprehensive review of recommendation systems.\n\n"
+                    "2.1 Collaborative Filtering\n"
+                    "Smith, J. & Brown, A. (2022) demonstrated that collaborative filtering "
+                    "achieves 85% accuracy in course recommendations. Their work at MIT "
+                    "showed significant improvements over earlier methods (Smith, 2019).\n\n"
+                    "2.2 Content-Based Approaches\n"
+                    "Jones, M. et al. (2023) explored content-based filtering with "
+                    "NLP features. Recent work by Lee (2024) combined this with "
+                    "deep learning for better personalization.\n\n"
+                    "2.3 Deep Learning Methods\n"
+                    "Recent advances in transformer models (Vaswani et al., 2023) "
+                    "have enabled more accurate recommendations. Wang (2024) achieved "
+                    "state-of-the-art results using BERT-based approaches.\n\n"
+                    "References\n"
+                    "Jones, M., Kim, S., & Patel, R. (2023). Content-based recommendation "
+                    "with NLP. Journal of ML Research, 24(3), 112-128.\n"
+                    "Lee, H. (2024). Deep learning for personalization. AI Conference Proceedings.\n"
+                    "Smith, J. & Brown, A. (2022). Collaborative filtering in education. "
+                    "Educational Technology Journal, 15(2), 45-62.\n"
+                    "Vaswani, A. et al. (2023). Attention mechanisms in recommendation. "
+                    "Nature Machine Intelligence, 5, 234-251.\n"
+                    "Wang, X. (2024). BERT-based recommendation systems. arXiv:2024.12345."
+                ),
+                "extraction_status": "success",
+                "is_approved": False,
+                "is_rejected": False,
+                "previous": chapter_two_v1,
+            },
+        )
+
+    def _ensure_additional_students(self, password, supervisor, session, stalled_days):
+        """Create 4 additional students under Dr. Chukwu with varying progress."""
         stalled_at = timezone.now() - timedelta(days=stalled_days)
-        for index, (email, name, interests) in enumerate(STALLED_STUDENTS):
-            # Always assign stalled students to the demo lead supervisor
-            # so they appear in the demo account's stalled list.
-            supervisor = supervisors[0]
+        
+        for student_data in ADDITIONAL_STUDENTS:
             student, created = User.objects.get_or_create(
-                email=email,
+                email=student_data["email"],
                 defaults={
-                    "full_name": name,
+                    "full_name": student_data["full_name"],
                     "role": "student",
                     "department": DEPARTMENT,
-                    "matric_no": f"CSC/2023/{200 + index:03d}",
+                    "matric_no": student_data["matric_no"],
                     "is_approved": True,
                     "is_assigned": True,
                     "supervisor": supervisor,
-                    "project_interests": interests,
+                    "project_interests": student_data["interests"],
                 },
             )
             if created:
-                student.set_password(PASSWORD)
+                student.set_password(password)
                 student.save()
+
+            # Create project based on progress
+            progress = student_data["progress"]
+            project_status = "in_progress" if progress != "proposal_pending" else "proposal_pending"
+            
             project, _ = Project.objects.get_or_create(
                 student=student,
-                supervisor=supervisor,
-                session=session,
                 defaults={
-                    "title": f"{name.split()[-1]}'s Stalled Project",
-                    "status": "in_progress",
+                    "supervisor": supervisor,
+                    "session": session,
+                    "title": f"{student_data['full_name'].split()[-1]}'s Final Year Project",
+                    "status": project_status,
                     "is_approved": True,
-                },
-            )
-            # Override auto_now_add so both the project and submission are backdated.
-            Project.objects.filter(pk=project.pk).update(created_at=stalled_at)
-            Submission.objects.get_or_create(
-                project=project,
-                milestone="proposal",
-                version=1,
-                defaults={
-                    "file_url": "https://example.com/stalled.pdf",
-                    "extracted_text": "Proposal draft.",
-                    "extraction_status": "success",
-                },
-            )
-            # Override auto_now_add so the submission is backdated for demo purposes.
-            Submission.objects.filter(
-                project=project, milestone="proposal", version=1
-            ).update(submitted_at=stalled_at)
-            SupervisorContact.objects.get_or_create(
-                student=student,
-                supervisor=supervisor,
-                session=session,
-                defaults={
-                    "contact_type": "message",
-                    "note": "Last contact was several weeks ago.",
-                    "occurred_at": stalled_at,
                 },
             )
 
+            # Add submissions and feedback based on progress
+            if progress == "proposal_pending":
+                # Just proposal submitted
+                Submission.objects.get_or_create(
+                    project=project,
+                    milestone="proposal",
+                    version=1,
+                    defaults={
+                        "file_url": f"https://example.com/{student_data['matric_no']}-proposal.pdf",
+                        "extracted_text": "Project proposal draft.",
+                        "extraction_status": "success",
+                        "is_approved": False,
+                        "is_rejected": False,
+                    },
+                )
+            
+            elif progress == "chapter_one_pending":
+                # Proposal approved, Chapter 1 pending review
+                Submission.objects.get_or_create(
+                    project=project,
+                    milestone="proposal",
+                    version=1,
+                    defaults={
+                        "file_url": f"https://example.com/{student_data['matric_no']}-proposal.pdf",
+                        "extracted_text": "Project proposal.",
+                        "extraction_status": "success",
+                        "is_approved": True,
+                    },
+                )
+                sub, _ = Submission.objects.get_or_create(
+                    project=project,
+                    milestone="chapter_one",
+                    version=1,
+                    defaults={
+                        "file_url": f"https://example.com/{student_data['matric_no']}-chapter1.pdf",
+                        "extracted_text": "Chapter one draft with some citations.",
+                        "extraction_status": "success",
+                        "is_approved": False,
+                        "is_rejected": False,
+                    },
+                )
+            
+            elif progress == "chapter_one_approved":
+                # Chapter 1 approved with feedback
+                Submission.objects.get_or_create(
+                    project=project,
+                    milestone="proposal",
+                    version=1,
+                    defaults={
+                        "file_url": f"https://example.com/{student_data['matric_no']}-proposal.pdf",
+                        "extracted_text": "Project proposal.",
+                        "extraction_status": "success",
+                        "is_approved": True,
+                    },
+                )
+                sub, _ = Submission.objects.get_or_create(
+                    project=project,
+                    milestone="chapter_one",
+                    version=1,
+                    defaults={
+                        "file_url": f"https://example.com/{student_data['matric_no']}-chapter1.pdf",
+                        "extracted_text": "Chapter one with literature review.",
+                        "extraction_status": "success",
+                        "is_approved": True,
+                    },
+                )
+                SubmissionReview.objects.get_or_create(
+                    submission=sub,
+                    reviewer=supervisor,
+                    defaults={
+                        "decision": "approved",
+                        "feedback": FEEDBACK_THEMES["literature_review"],
+                    },
+                )
+            
+            elif progress == "stalled":
+                # Stalled student - backdate everything
+                Project.objects.filter(pk=project.pk).update(created_at=stalled_at)
+                
+                Submission.objects.get_or_create(
+                    project=project,
+                    milestone="proposal",
+                    version=1,
+                    defaults={
+                        "file_url": f"https://example.com/{student_data['matric_no']}-proposal.pdf",
+                        "extracted_text": "Initial proposal draft.",
+                        "extraction_status": "success",
+                        "is_approved": True,
+                    },
+                )
+                Submission.objects.filter(
+                    project=project, milestone="proposal", version=1
+                ).update(submitted_at=stalled_at)
+                
+                # Add rejected chapter one with feedback themes
+                sub, _ = Submission.objects.get_or_create(
+                    project=project,
+                    milestone="chapter_one",
+                    version=1,
+                    defaults={
+                        "file_url": f"https://example.com/{student_data['matric_no']}-chapter1.pdf",
+                        "extracted_text": "Chapter one draft.",
+                        "extraction_status": "success",
+                        "is_approved": False,
+                        "is_rejected": True,
+                        "rejection_comment": f"{FEEDBACK_THEMES['literature_review']} {FEEDBACK_THEMES['citation_formatting']}",
+                    },
+                )
+                Submission.objects.filter(
+                    project=project, milestone="chapter_one", version=1
+                ).update(submitted_at=stalled_at)
+                
+                SubmissionReview.objects.get_or_create(
+                    submission=sub,
+                    reviewer=supervisor,
+                    defaults={
+                        "decision": "rejected",
+                        "feedback": f"{FEEDBACK_THEMES['literature_review']} {FEEDBACK_THEMES['citation_formatting']}",
+                    },
+                )
+                
+                # Log old contact
+                SupervisorContact.objects.get_or_create(
+                    student=student,
+                    supervisor=supervisor,
+                    session=session,
+                    defaults={
+                        "contact_type": "email",
+                        "note": "Followed up on stalled progress. No response.",
+                        "occurred_at": stalled_at,
+                    },
+                )
+
     def _ensure_unassigned_students(self, session):
-        for index, (email, name, interests) in enumerate(UNASSIGNED_STUDENTS):
-            matric = f"CSC/2023/{300 + index:03d}"
+        """Create unassigned students for suggest supervisor tool testing."""
+        for student_data in UNASSIGNED_STUDENTS:
             student, created = User.objects.get_or_create(
-                email=email,
+                email=student_data["email"],
                 defaults={
-                    "full_name": name,
+                    "full_name": student_data["full_name"],
                     "role": "student",
                     "department": DEPARTMENT,
-                    "matric_no": matric,
+                    "matric_no": student_data["matric_no"],
                     "is_approved": True,
                     "is_assigned": False,
-                    "project_interests": interests,
+                    "project_interests": student_data["interests"],
                 },
             )
             if created:
                 student.set_password(PASSWORD)
                 student.save()
+            
+            # Create project without supervisor
             Project.objects.get_or_create(
                 student=student,
-                supervisor=None,
-                session=session,
                 defaults={
-                    "title": f"{name.split()[-1]}'s Hypothetical Project",
+                    "supervisor": None,
+                    "session": session,
+                    "title": f"{student_data['full_name'].split()[-1]}'s Proposed Project",
                     "status": "proposal_pending",
                     "is_approved": False,
                 },
