@@ -30,9 +30,6 @@ const StudentPage = () => {
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<
     number | null
   >(null);
-  const [contactType, setContactType] = useState("meeting");
-  const [contactNote, setContactNote] = useState("");
-  const [contactLoading, setContactLoading] = useState(false);
 
   const user = useUserStore((state) => state.user);
 

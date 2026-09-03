@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from .models import Project, Submission, SupervisorContact
 
-DEFAULT_THRESHOLD_DAYS = 10
+DEFAULT_THRESHOLD_DAYS = 21
 MIN_THRESHOLD_DAYS = 1
 MAX_THRESHOLD_DAYS = 90
 
