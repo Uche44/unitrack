@@ -175,11 +175,19 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # ✅ FIXED CORS SETTINGS
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173", 
-    "http://127.0.0.1:5173",
-    "https://unitrack-two.vercel.app",
-]
+
+# Get allowed origins from env or use defaults
+_cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
+if _cors_origins:
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in _cors_origins.split(",")]
+else:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:5173", 
+        "http://127.0.0.1:5173",
+        "https://unitrack-two.vercel.app",
+        "https://unitrack-pevw.vercel.app",
+    ]
+
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = [
