@@ -79,22 +79,22 @@ ADDITIONAL_STUDENTS = [
 # Unassigned students for suggest supervisor tool testing
 UNASSIGNED_STUDENTS = [
     {
-        "email": "bisi.akinwale@example.com",
-        "full_name": "Bisi Akinwale",
-        "matric_no": "2022/101",
-        "interests": "nlp, machine translation",
+        "email": "tosin.adebayo@example.com",
+        "full_name": "Tosin Adebayo",
+        "matric_no": "2022/201",
+        "interests": "cybersecurity, network security",
     },
     {
-        "email": "damola.folarin@example.com",
-        "full_name": "Damola Folarin",
-        "matric_no": "2022/102",
-        "interests": "machine learning, deep learning",
+        "email": "uche.nwankwo@example.com",
+        "full_name": "Uche Nwankwo",
+        "matric_no": "2022/202",
+        "interests": "artificial intelligence, expert systems",
     },
     {
-        "email": "funke.adebisi@example.com",
-        "full_name": "Funke Adebisi",
-        "matric_no": "2022/103",
-        "interests": "data mining, healthcare analytics",
+        "email": "kemi.ogunleye@example.com",
+        "full_name": "Kemi Ogunleye",
+        "matric_no": "2022/203",
+        "interests": "cloud computing, distributed systems",
     },
 ]
 
