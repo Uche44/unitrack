@@ -119,12 +119,15 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--password", default=PASSWORD)
         parser.add_argument("--stalled-days", type=int, default=STALLED_DAYS)
+        parser.add_argument("--flush", action="store_true", help="Clear old demo data before seeding")
 
     def handle(self, *args, **options):
         password = options["password"]
         stalled_days = options["stalled_days"]
         
         with transaction.atomic():
+            if options["flush"]:
+                self._flush_old_demo_data()
             session = self._ensure_session()
             tags = self._ensure_tags()
             admin = self._ensure_admin(password)
@@ -138,6 +141,23 @@ class Command(BaseCommand):
         self.stdout.write(f"  Admin     : {admin.email} / {password}")
         self.stdout.write(f"  Supervisor: {supervisor.email} / {JUDGE_SUPERVISOR['password']}")
         self.stdout.write(f"  Student   : {judge_student.email} / {JUDGE_STUDENT['password']}")
+
+    def _flush_old_demo_data(self):
+        """Clear old demo data from previous seed scripts."""
+        self.stdout.write("Flushing old demo data...")
+        
+        # Delete old demo users (by email patterns)
+        old_patterns = [
+            "@students.unitrack-demo.test",
+            "@unitrack-demo.test",
+        ]
+        for pattern in old_patterns:
+            User.objects.filter(email__icontains=pattern).delete()
+        
+        # Delete old sessions
+        ProjectSession.objects.filter(session="2026/2027").delete()
+        
+        self.stdout.write(self.style.SUCCESS("Old demo data flushed."))
 
     def _ensure_session(self):
         """Create 2025/2026 academic session."""
