@@ -24,6 +24,14 @@ IS_PRODUCTION = not DEBUG
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
+# Allow Render's auto-generated hostname in production
+if IS_PRODUCTION:
+    RENDER_EXTERNAL_HOSTNAME = os.getenv('RENDER_EXTERNAL_HOSTNAME')
+    if RENDER_EXTERNAL_HOSTNAME:
+        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    # Also allow .onrender.com subdomains
+    ALLOWED_HOSTS.extend(['.onrender.com'])
+
 
 # Application definition
 
