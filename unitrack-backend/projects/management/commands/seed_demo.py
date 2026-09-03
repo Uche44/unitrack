@@ -44,6 +44,38 @@ JUDGE_STUDENT = {
     "interests": "machine learning, recommendation systems",
 }
 
+# Additional approved supervisors for assignment tool testing
+ADDITIONAL_SUPERVISORS = [
+    {
+        "email": "dr.adeyemi@example.com",
+        "password": "demo-pass-123",
+        "full_name": "Dr. Funke Adeyemi",
+        "expertise": "cybersecurity, network security, cryptography",
+        "staff_id": "CS/002",
+    },
+    {
+        "email": "dr.ibrahim@example.com",
+        "password": "demo-pass-123",
+        "full_name": "Dr. Sadiq Ibrahim",
+        "expertise": "artificial intelligence, expert systems, machine learning",
+        "staff_id": "CS/003",
+    },
+    {
+        "email": "dr.okeke@example.com",
+        "password": "demo-pass-123",
+        "full_name": "Dr. Amaka Okeke",
+        "expertise": "cloud computing, distributed systems, software engineering",
+        "staff_id": "CS/004",
+    },
+    {
+        "email": "dr.balogun@example.com",
+        "password": "demo-pass-123",
+        "full_name": "Dr. Tunde Balogun",
+        "expertise": "data mining, analytics, big data",
+        "staff_id": "CS/005",
+    },
+]
+
 # Additional students under Dr. Chukwu (5 total including Obi)
 ADDITIONAL_STUDENTS = [
     {
@@ -132,6 +164,7 @@ class Command(BaseCommand):
             tags = self._ensure_tags()
             admin = self._ensure_admin(password)
             supervisor = self._ensure_supervisor(password, tags)
+            self._ensure_additional_supervisors(tags)
             judge_student = self._ensure_judge_student(password, supervisor, session)
             self._ensure_judge_student_chapters(judge_student, supervisor)
             self._ensure_additional_students(password, supervisor, session, stalled_days)
@@ -219,6 +252,38 @@ class Command(BaseCommand):
             tags["recommendation systems"],
         ])
         return supervisor
+
+    def _ensure_additional_supervisors(self, tags):
+        """Create additional approved supervisors for assignment tool testing."""
+        # Map expertise strings to tag objects
+        expertise_to_tags = {
+            "cybersecurity": ["nlp"],  # Using available tags
+            "artificial intelligence": ["machine learning", "nlp"],
+            "cloud computing": ["data mining"],
+            "data mining": ["data mining", "machine learning"],
+        }
+        
+        for sup_data in ADDITIONAL_SUPERVISORS:
+            supervisor, created = User.objects.get_or_create(
+                email=sup_data["email"],
+                defaults={
+                    "full_name": sup_data["full_name"],
+                    "role": "supervisor",
+                    "department": DEPARTMENT,
+                    "is_approved": True,
+                    "capacity": 5,
+                    "areas_of_expertise": sup_data["expertise"],
+                    "staff_id": sup_data["staff_id"],
+                },
+            )
+            if created:
+                supervisor.set_password(sup_data["password"])
+                supervisor.save()
+            else:
+                # Ensure password and approval are set even if user exists
+                supervisor.set_password(sup_data["password"])
+                supervisor.is_approved = True
+                supervisor.save()
 
     def _ensure_judge_student(self, password, supervisor, session):
         """Create Obi Arinze - the judge student account."""
